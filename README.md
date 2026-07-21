@@ -1,6 +1,6 @@
 # Nutrition Research Monorepo
 
-Turborepo workspace for the nutrition survey research app, following the same `apps/*` and `packages/backend/convex` architecture as `D:\KI-QUDRAT\ki2-monolith-solution`.
+Turborepo workspace for the nutrition survey research app, following the same `apps/*` and `packages/backend/convex` architecture as `D:\KI-QUDRAT\ki2-monolith-solution`. .
 
 ## Structure
 
