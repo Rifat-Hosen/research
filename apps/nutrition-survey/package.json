@@ -1,0 +1,33 @@
+{
+  "name": "@workspace/nutrition-survey",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --turbopack --port 3003",
+    "build": "next build",
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy",
+    "start": "next start -p 3003",
+    "lint": "next lint",
+    "check-types": "tsc --noEmit",
+    "install": "bun install"
+  },
+  "dependencies": {
+    "@workspace/backend": "workspace:*",
+    "convex": "^1.41.0",
+    "lucide-react": "^0.577.0",
+    "next": "^16.1.7",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^25.1.0",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.2",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3"
+  }
+}

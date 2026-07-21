@@ -1,0 +1,28 @@
+{
+  "name": "@workspace/backend",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./convex/_generated/api": "./convex/_generated/api.js",
+    "./convex/_generated/api.js": "./convex/_generated/api.js",
+    "./convex/_generated/dataModel": "./convex/_generated/dataModel.d.ts",
+    "./convex/_generated/server": "./convex/_generated/server.js",
+    "./convex/survey/questionnaire": "./convex/survey/questionnaire.ts",
+    "./convex/survey/scoring": "./convex/survey/scoring.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit -p convex",
+    "dev": "convex dev",
+    "deploy": "convex deploy",
+    "typecheck": "tsc --noEmit -p convex",
+    "check-types": "tsc --noEmit -p convex",
+    "install": "bun install"
+  },
+  "dependencies": {
+    "convex": "^1.41.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}
