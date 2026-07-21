@@ -28,6 +28,11 @@ export default defineSchema({
     hddsScore: v.union(v.number(), v.null()),
     heiScore: v.union(v.number(), v.null()),
     doubleBurdenFlag: v.union(v.boolean(), v.null()),
+    reviewedAt: v.optional(v.number()),
+    reviewedBy: v.optional(v.string()),
+    adminNotes: v.optional(v.string()),
+    excludedFromAnalysis: v.optional(v.boolean()),
+    exclusionReason: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

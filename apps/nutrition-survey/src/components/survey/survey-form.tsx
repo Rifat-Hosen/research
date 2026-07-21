@@ -20,13 +20,92 @@ function today() {
   ).padStart(2, "0")}/${String(date.getFullYear()).slice(-2)}`;
 }
 
-const initialValues: SurveyValues = {
-  date: today(),
-  C0: "1",
-};
+function generatedRespondentId() {
+  const date = new Date();
+  const stamp = [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+    String(date.getHours()).padStart(2, "0"),
+    String(date.getMinutes()).padStart(2, "0"),
+    String(date.getSeconds()).padStart(2, "0"),
+  ].join("");
+  const random = Math.random().toString(36).slice(2, 7).toUpperCase();
+  return `RS-${stamp}-${random}`;
+}
+
+function createInitialValues(): SurveyValues {
+  return {
+    respondentId: generatedRespondentId(),
+    date: today(),
+    districtArea: "Not collected",
+    interviewerCode: "WEB",
+  };
+}
+
+const respondentSections = surveySections.filter(
+  (section) => section.id !== "metadata",
+);
 
 function valueAsString(value: string | string[] | undefined) {
   return Array.isArray(value) ? value.join(", ") : (value ?? "");
+}
+
+function heightPartsFromCm(value: string | string[] | undefined) {
+  const cm = Number(valueAsString(value));
+  if (!Number.isFinite(cm) || cm <= 0) {
+    return { feet: "", inches: "" };
+  }
+
+  let totalInches = Math.round(cm / 2.54);
+  const feet = Math.floor(totalInches / 12);
+  let inches = totalInches - feet * 12;
+
+  if (inches === 12) {
+    totalInches += 1;
+    return {
+      feet: String(Math.floor(totalInches / 12)),
+      inches: "0",
+    };
+  }
+
+  return { feet: String(feet), inches: String(inches) };
+}
+
+function feetInchesToCm(feet: string, inches: string) {
+  const parsedFeet = Number(feet || 0);
+  const parsedInches = Number(inches || 0);
+  if (!Number.isFinite(parsedFeet) || !Number.isFinite(parsedInches)) return "";
+
+  const totalInches = parsedFeet * 12 + parsedInches;
+  if (totalInches <= 0) return "";
+
+  return String(Math.round(totalInches * 2.54 * 10) / 10);
+}
+
+function reviewValue(field: SurveyField, value: string | string[] | undefined) {
+  if (field.id === "B1") {
+    const heightParts = heightPartsFromCm(value);
+    if (!heightParts.feet && !heightParts.inches) return "";
+    return `${heightParts.feet || "0"} ft ${heightParts.inches || "0"} inch`;
+  }
+
+  if (field.options?.length) {
+    const labelByValue = new Map(
+      field.options.map((option) => [option.value, option.label]),
+    );
+
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => labelByValue.get(item) ?? item)
+        .filter(Boolean)
+        .join(", ");
+    }
+
+    return value ? (labelByValue.get(value) ?? value) : "";
+  }
+
+  return valueAsString(value);
 }
 
 function FieldInput({
@@ -39,6 +118,53 @@ function FieldInput({
   onChange: (value: string | string[]) => void;
 }) {
   const inputId = `field-${field.id}`;
+
+  if (field.id === "B1") {
+    const heightParts = heightPartsFromCm(value);
+    const cmValue = valueAsString(value);
+
+    return (
+      <div className="grid gap-2">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Input
+              id={`${inputId}-feet`}
+              inputMode="numeric"
+              min={2}
+              max={8}
+              type="number"
+              value={heightParts.feet}
+              onChange={(event) =>
+                onChange(feetInchesToCm(event.target.value, heightParts.inches))
+              }
+              placeholder="Feet"
+            />
+            <p className="mt-1 text-xs text-slate-500">Feet</p>
+          </div>
+          <div>
+            <Input
+              id={`${inputId}-inches`}
+              inputMode="numeric"
+              min={0}
+              max={11}
+              type="number"
+              value={heightParts.inches}
+              onChange={(event) =>
+                onChange(feetInchesToCm(heightParts.feet, event.target.value))
+              }
+              placeholder="Inches"
+            />
+            <p className="mt-1 text-xs text-slate-500">Inches</p>
+          </div>
+        </div>
+        {cmValue ? (
+          <p className="text-xs text-slate-500">
+            Height will be converted automatically for BMI calculation.
+          </p>
+        ) : null}
+      </div>
+    );
+  }
 
   if (field.type === "radio") {
     return (
@@ -121,22 +247,23 @@ export function SurveyForm() {
   const router = useRouter();
   const submitSurvey = useMutation(surveyApi.public.submitSurvey);
   const [step, setStep] = useState(0);
-  const [values, setValues] = useState<SurveyValues>(initialValues);
+  const [values, setValues] = useState<SurveyValues>(() =>
+    createInitialValues(),
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const currentSection = surveySections[step];
-  const isReview = step === surveySections.length;
-  const progress = Math.round((step / surveySections.length) * 100);
+  const currentSection = respondentSections[step];
+  const isReview = step === respondentSections.length;
+  const progress = Math.round((step / respondentSections.length) * 100);
 
   const reviewRows = useMemo(
     () =>
-      surveySections.flatMap((section) =>
+      respondentSections.flatMap((section) =>
         section.fields.map((field) => ({
-          section: section.title,
           id: field.id,
           label: field.label,
-          value: valueAsString(values[field.id]),
+          value: reviewValue(field, values[field.id]),
         })),
       ),
     [values],
@@ -152,7 +279,7 @@ export function SurveyForm() {
   }
 
   function validateSection(sectionIndex: number) {
-    const section = surveySections[sectionIndex];
+    const section = respondentSections[sectionIndex];
     const nextErrors: Record<string, string> = {};
     if (!section) return true;
 
@@ -198,13 +325,13 @@ export function SurveyForm() {
 
   function nextStep() {
     if (!validateSection(step)) return;
-    setStep((current) => Math.min(current + 1, surveySections.length));
+    setStep((current) => Math.min(current + 1, respondentSections.length));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function submit() {
     setSubmitError("");
-    for (let index = 0; index < surveySections.length; index += 1) {
+    for (let index = 0; index < respondentSections.length; index += 1) {
       if (!validateSection(index)) {
         setStep(index);
         return;
@@ -243,8 +370,8 @@ export function SurveyForm() {
               </p>
             </div>
             <div className="text-sm font-medium text-slate-600">
-              Step {Math.min(step + 1, surveySections.length + 1)} of{" "}
-              {surveySections.length + 1}
+              Step {Math.min(step + 1, respondentSections.length + 1)} of{" "}
+              {respondentSections.length + 1}
             </div>
           </div>
           <div className="mt-4 h-2 rounded-full bg-slate-100">
@@ -252,6 +379,12 @@ export function SurveyForm() {
               className="h-2 rounded-full bg-emerald-600 transition-all"
               style={{ width: `${progress}%` }}
             />
+          </div>
+          <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            This survey is being collected for academic research purposes.
+            Please submit the form only once using your own email address, and
+            provide accurate information as much as possible. Duplicate or
+            incorrect responses may affect the quality of the research results.
           </div>
         </div>
 
@@ -307,20 +440,18 @@ export function SurveyForm() {
               <table className="w-full text-left text-sm">
                 <thead className="sticky top-0 bg-slate-100 text-slate-700">
                   <tr>
-                    <th className="p-2">Section</th>
-                    <th className="p-2">Field</th>
-                    <th className="p-2">Value</th>
+                    <th className="p-3">Question</th>
+                    <th className="p-3">Answer</th>
                   </tr>
                 </thead>
                 <tbody>
                   {reviewRows.map((row) => (
                     <tr key={row.id} className="border-t">
-                      <td className="p-2 text-slate-500">{row.section}</td>
-                      <td className="p-2">
+                      <td className="p-3">
                         <span className="font-medium">{row.id}</span>{" "}
                         {row.label}
                       </td>
-                      <td className="p-2">{row.value || "-"}</td>
+                      <td className="p-3">{row.value || "-"}</td>
                     </tr>
                   ))}
                 </tbody>

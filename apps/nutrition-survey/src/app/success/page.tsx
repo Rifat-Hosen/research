@@ -1,5 +1,4 @@
 import { CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export default function SuccessPage() {
   return (
@@ -11,9 +10,6 @@ export default function SuccessPage() {
           Thank you. The response has been saved for research data entry and
           review.
         </p>
-        <Button asChild href="/" className="mt-5">
-          Submit another response
-        </Button>
       </section>
     </main>
   );

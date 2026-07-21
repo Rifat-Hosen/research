@@ -20,6 +20,17 @@ function read(values: SurveyValues, key: string) {
   return values[key] ?? "";
 }
 
+function currentDateDdMmYy() {
+  const date = new Date();
+  return `${String(date.getDate()).padStart(2, "0")}/${String(
+    date.getMonth() + 1,
+  ).padStart(2, "0")}/${String(date.getFullYear()).slice(-2)}`;
+}
+
+function fallbackRespondentId() {
+  return `RS-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+}
+
 function sectionValues(values: SurveyValues, sectionId: string) {
   const section = surveySections.find((item) => item.id === sectionId);
   if (!section) return {};
@@ -30,12 +41,14 @@ function sectionValues(values: SurveyValues, sectionId: string) {
 }
 
 export function buildSurveyPayload(values: SurveyValues) {
+  const date = String(read(values, "date") || currentDateDdMmYy());
+
   const payload: Record<string, unknown> = {
-    respondentId: String(read(values, "respondentId")),
+    respondentId: String(read(values, "respondentId") || fallbackRespondentId()),
     email: String(read(values, "email")),
-    date: String(read(values, "date")),
-    districtArea: String(read(values, "districtArea")),
-    interviewerCode: String(read(values, "interviewerCode")),
+    date,
+    districtArea: String(read(values, "districtArea") || "Not collected"),
+    interviewerCode: String(read(values, "interviewerCode") || "WEB"),
     consentGiven: read(values, "C0") === "1",
     notes: String(read(values, "notes")),
     heiScore:

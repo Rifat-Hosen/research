@@ -1,6 +1,9 @@
 "use client";
 
-export function downloadSurveyRows(rows: Record<string, unknown>[]) {
+export function downloadSurveyRows(
+  rows: Record<string, unknown>[],
+  filename = "nutrition-survey-responses.csv",
+) {
   const headers = Array.from(
     rows.reduce((set, row) => {
       Object.keys(row).forEach((key) => set.add(key));
@@ -23,7 +26,7 @@ export function downloadSurveyRows(rows: Record<string, unknown>[]) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = "nutrition-survey-responses.csv";
+  anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(url);
 }

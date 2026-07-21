@@ -88,8 +88,10 @@ export const surveySections: SurveySection[] = [
   {
     id: "consent",
     title: "Consent",
+    description:
+      "Please read before continuing: The information collected in this survey will be used only for academic research on healthy eating, double burden of malnutrition, and BMI among adults. Your responses will be analyzed in summary form. The data will not be used for any personal, commercial, or harmful purpose, and your personal identity will not be published. Participation is voluntary, and you may stop at any time.",
     fields: [
-      { id: "C0", label: "Consent given", type: "radio", required: true, options: yesNoOptions },
+      { id: "C0", label: "I have read the information above and agree to participate", type: "radio", required: true, options: yesNoOptions },
     ],
   },
   {
@@ -111,9 +113,9 @@ export const surveySections: SurveySection[] = [
       { id: "A2", label: "Age (completed years)", type: "number", required: true, unit: "years", min: 18, max: 120 },
       { id: "A3", label: "Sex", type: "radio", required: true, options: [{ label: "Male [0]", value: "0" }, { label: "Female [1]", value: "1" }, { label: "Other [2]", value: "2" }] },
       { id: "A4", label: "Religion", type: "radio", options: [{ label: "Islam [0]", value: "0" }, { label: "Hinduism [1]", value: "1" }, { label: "Christian [2]", value: "2" }, { label: "Buddhism [3]", value: "3" }, { label: "Other [4]", value: "4" }] },
-      { id: "A5", label: "Occupation", type: "radio", options: [{ label: "Service [0]", value: "0" }, { label: "Business [1]", value: "1" }, { label: "Agriculture [2]", value: "2" }, { label: "Labour [3]", value: "3" }, { label: "Homemaker [4]", value: "4" }, { label: "Student [5]", value: "5" }, { label: "Unemployed [6]", value: "6" }, { label: "Other [7]", value: "7" }] },
+      { id: "A5", label: "Occupation", type: "radio", options: [{ label: "Student [1]", value: "1" }, { label: "Service [2]", value: "2" }, { label: "Business [3]", value: "3" }, { label: "Unemployed [4]", value: "4" }, { label: "Other [5]", value: "5" }, { label: "Homemaker [6]", value: "6" }, { label: "Labour [7]", value: "7" }, { label: "Agriculture [8]", value: "8" }] },
       { id: "A6", label: "Personal monthly income (BDT)", type: "radio", options: [{ label: "None [0]", value: "0" }, { label: "<=10k [1]", value: "1" }, { label: "10,001-20k [2]", value: "2" }, { label: "20,001-40k [3]", value: "3" }, { label: ">40k [4]", value: "4" }] },
-      { id: "A7", label: "Marital status", type: "radio", options: [{ label: "Married [0]", value: "0" }, { label: "Unmarried [1]", value: "1" }, { label: "Divorced/separated [2]", value: "2" }, { label: "Widowed [3]", value: "3" }] },
+      { id: "A7", label: "Marital status", type: "radio", options: [{ label: "Unmarried [1]", value: "1" }, { label: "Married [2]", value: "2" }, { label: "Divorced/separated [3]", value: "3" }, { label: "Widowed [4]", value: "4" }] },
       { id: "A8", label: "Education", type: "radio", options: [{ label: "None [0]", value: "0" }, { label: "Primary [1]", value: "1" }, { label: "SSC [2]", value: "2" }, { label: "HSC [3]", value: "3" }, { label: "Graduate [4]", value: "4" }, { label: "Postgraduate [5]", value: "5" }] },
       { id: "A9", label: "Family size", type: "number", unit: "persons", min: 1 },
       { id: "A10", label: "Total monthly family income (BDT)", type: "radio", options: [{ label: "<=10k [0]", value: "0" }, { label: "10,001-20k [1]", value: "1" }, { label: "20,001-40k [2]", value: "2" }, { label: ">40k [3]", value: "3" }] },
@@ -128,7 +130,7 @@ export const surveySections: SurveySection[] = [
     id: "anthropometry",
     title: "B. Anthropometry and BMI",
     fields: [
-      { id: "B1", label: "Height", type: "number", required: true, unit: "cm", min: 80, max: 250 },
+      { id: "B1", label: "Height", type: "number", required: true, unit: "ft + inch", min: 80, max: 250 },
       { id: "B2", label: "Weight", type: "number", required: true, unit: "kg", min: 20, max: 300 },
       { id: "B4", label: "Energy requirement", type: "number", unit: "kcal/day" },
       { id: "B5", label: "Energy intake", type: "number", unit: "kcal/day" },
