@@ -203,6 +203,9 @@ export function DashboardClient() {
             <p className="mt-3 text-3xl font-semibold">
               {stats.included} / {stats.targetSampleSize}
             </p>
+            <p className="mt-1 text-sm text-slate-500">
+              {stats.remainingSample} more valid records needed to reach target.
+            </p>
           </div>
           <div className="grid gap-3">
             <div className="h-4 overflow-hidden rounded-full bg-slate-100">
@@ -232,6 +235,47 @@ export function DashboardClient() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm font-medium text-slate-500">Included rate</p>
+          <p className="mt-2 text-2xl font-semibold">
+            {stats.includedPercent}%
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            {stats.included} included · {stats.excluded} excluded
+          </p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm font-medium text-slate-500">Review progress</p>
+          <p className="mt-2 text-2xl font-semibold">
+            {stats.reviewedPercent}%
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            {stats.reviewed} reviewed · {stats.unreviewed} pending
+          </p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm font-medium text-slate-500">
+            Quality issue rate
+          </p>
+          <p className="mt-2 text-2xl font-semibold">
+            {stats.qualityIssuePercent}%
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            {stats.qualityIssueCount} records need attention
+          </p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm font-medium text-slate-500">Sample remaining</p>
+          <p className="mt-2 text-2xl font-semibold">
+            {stats.remainingSample}
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            Based on included records only
+          </p>
         </div>
       </section>
 

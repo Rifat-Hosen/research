@@ -1,8 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery } from "convex/react";
-import { AlertTriangle, Download, Search } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import {
+  AlertTriangle,
+  Download,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { downloadSurveyRows } from "@/lib/export";
@@ -51,6 +56,11 @@ export function SubmissionsClient() {
   const [toDate, setToDate] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortDir, setSortDir] = useState("desc");
+  const [busyId, setBusyId] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [deleteText, setDeleteText] = useState("");
+  const deleteResponse = useMutation(surveyApi.admin.deleteResponse);
 
   const queryArgs = useMemo(
     () =>
@@ -128,6 +138,34 @@ export function SubmissionsClient() {
     setSortBy("createdAt");
     setSortDir("desc");
     setPage(1);
+  }
+
+  function openDeleteModal(response: any) {
+    setDeleteTarget(response);
+    setDeleteText("");
+    setActionMessage("");
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+
+    setBusyId(deleteTarget._id);
+    setActionMessage("");
+    try {
+      await deleteResponse({
+        id: deleteTarget._id,
+        confirmationText: deleteText,
+      });
+      setActionMessage("Submission deleted.");
+      setDeleteTarget(null);
+      setDeleteText("");
+    } catch (error) {
+      setActionMessage(
+        error instanceof Error ? error.message : "Failed to delete submission.",
+      );
+    } finally {
+      setBusyId("");
+    }
   }
 
   return (
@@ -280,8 +318,13 @@ export function SubmissionsClient() {
             Page {responsePage?.page ?? page} of {responsePage?.totalPages ?? 1}
           </p>
         </div>
+        {actionMessage ? (
+          <div className="border-b bg-slate-50 px-4 py-2 text-sm text-slate-700">
+            {actionMessage}
+          </div>
+        ) : null}
         <div className="overflow-auto">
-          <table className="w-full min-w-[1100px] text-left text-sm">
+          <table className="w-full min-w-[1220px] text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
                 <th className="p-3">Respondent ID</th>
@@ -340,14 +383,28 @@ export function SubmissionsClient() {
                     {new Date(response.createdAt).toLocaleString()}
                   </td>
                   <td className="p-3">
-                    <Button
-                      asChild
-                      href={`/admin/submissions/${response._id}`}
-                      variant="outline"
-                      size="sm"
-                    >
-                      View
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        asChild
+                        href={`/admin/submissions/${response._id}`}
+                        variant="outline"
+                        size="sm"
+                      >
+                        View
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={busyId === response._id}
+                        onClick={() => openDeleteModal(response)}
+                        className="h-9 w-9 shrink-0 border-rose-200 px-0 text-rose-700 hover:bg-rose-50"
+                        aria-label={`Delete ${response.respondentId}`}
+                        title="Delete"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -387,6 +444,66 @@ export function SubmissionsClient() {
           </Button>
         </div>
       </section>
+
+      {deleteTarget ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <section className="w-full max-w-md rounded-2xl border bg-white p-5 shadow-xl">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-rose-50 p-2 text-rose-700">
+                <Trash2 className="size-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-950">
+                  Delete submission?
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  This will permanently delete{" "}
+                  <span className="font-medium">
+                    {deleteTarget.respondentId}
+                  </span>
+                  . This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Type DELETE to confirm
+              </label>
+              <Input
+                value={deleteText}
+                onChange={(event) => setDeleteText(event.target.value)}
+                placeholder="DELETE"
+                autoFocus
+              />
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setDeleteTarget(null);
+                  setDeleteText("");
+                }}
+                disabled={busyId === deleteTarget._id}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                disabled={
+                  deleteText.trim() !== "DELETE" || busyId === deleteTarget._id
+                }
+                onClick={confirmDelete}
+                className="bg-rose-700 hover:bg-rose-800"
+              >
+                {busyId === deleteTarget._id ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

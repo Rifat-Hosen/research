@@ -3,7 +3,7 @@ import { mutation, query } from "../_generated/server";
 import { surveySections, type SurveyField } from "./questionnaire";
 import { getBmiClassLabel } from "./scoring";
 
-const targetSampleSize = 300;
+const targetSampleSize = 500;
 
 const sectionKeys = [
   "sociodemographic",
@@ -323,6 +323,7 @@ export const getDashboardStats = query({
       today: responses.filter((response) => response.createdAt >= todayStartMs)
         .length,
       targetSampleSize,
+      remainingSample: Math.max(0, targetSampleSize - includedResponses.length),
       sampleCompletionPercent: Math.min(
         100,
         Math.round((includedResponses.length / targetSampleSize) * 100),
@@ -331,9 +332,27 @@ export const getDashboardStats = query({
       excluded: responses.length - includedResponses.length,
       reviewed: responses.filter((response) => response.reviewedAt).length,
       unreviewed: responses.filter((response) => !response.reviewedAt).length,
+      reviewedPercent: responses.length
+        ? Math.round(
+            (responses.filter((response) => response.reviewedAt).length /
+              responses.length) *
+              100,
+          )
+        : 0,
+      includedPercent: responses.length
+        ? Math.round((includedResponses.length / responses.length) * 100)
+        : 0,
       qualityIssueCount: responses.filter(
         (response) => getQualityFlags(response).length > 0,
       ).length,
+      qualityIssuePercent: responses.length
+        ? Math.round(
+            (responses.filter((response) => getQualityFlags(response).length > 0)
+              .length /
+              responses.length) *
+              100,
+          )
+        : 0,
       thisWeek: responses.filter((response) => response.createdAt >= sevenDaysAgoMs)
         .length,
       averageBmi: average(
@@ -448,6 +467,26 @@ export const updateReviewStatus = mutation({
       exclusionReason: args.exclusionReason ?? "",
       updatedAt: Date.now(),
     });
+    return args.id;
+  },
+});
+
+export const deleteResponse = mutation({
+  args: {
+    id: v.id("surveyResponses"),
+    confirmationText: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const response = await ctx.db.get(args.id);
+    if (!response) {
+      throw new Error("Submission not found.");
+    }
+
+    if (args.confirmationText.trim() !== "DELETE") {
+      throw new Error("Type DELETE to confirm deletion.");
+    }
+
+    await ctx.db.delete(args.id);
     return args.id;
   },
 });
