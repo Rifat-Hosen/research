@@ -49,8 +49,6 @@ export const submitSurvey = mutation({
       bmi,
       bmiClassCode,
       hddsScore,
-      // Section G was removed, so double burden is no longer assessed.
-      doubleBurdenFlag: null,
       createdAt: now,
       updatedAt: now,
     });

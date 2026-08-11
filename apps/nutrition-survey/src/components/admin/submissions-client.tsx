@@ -49,7 +49,6 @@ export function SubmissionsClient() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [bmiClassCode, setBmiClassCode] = useState("");
-  const [doubleBurden, setDoubleBurden] = useState("");
   const [sex, setSex] = useState("");
   const [status, setStatus] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -69,7 +68,6 @@ export function SubmissionsClient() {
         page,
         limit: pageSize,
         bmiClassCode: bmiClassCode ? Number(bmiClassCode) : undefined,
-        doubleBurden,
         sex,
         status,
         fromDate,
@@ -81,7 +79,6 @@ export function SubmissionsClient() {
       search,
       page,
       bmiClassCode,
-      doubleBurden,
       sex,
       status,
       fromDate,
@@ -95,7 +92,6 @@ export function SubmissionsClient() {
       compactArgs({
         search,
         bmiClassCode: bmiClassCode ? Number(bmiClassCode) : undefined,
-        doubleBurden,
         sex,
         status,
         fromDate,
@@ -106,7 +102,6 @@ export function SubmissionsClient() {
     [
       search,
       bmiClassCode,
-      doubleBurden,
       sex,
       status,
       fromDate,
@@ -130,7 +125,6 @@ export function SubmissionsClient() {
   function resetFilters() {
     setSearch("");
     setBmiClassCode("");
-    setDoubleBurden("");
     setSex("");
     setStatus("");
     setFromDate("");
@@ -268,17 +262,6 @@ export function SubmissionsClient() {
             <option value="3">Obesity</option>
           </Select>
           <Select
-            value={doubleBurden}
-            onChange={(value) => {
-              setDoubleBurden(value);
-              setPage(1);
-            }}
-          >
-            <option value="">All double burden</option>
-            <option value="flagged">Flagged</option>
-            <option value="not_flagged">Not flagged</option>
-          </Select>
-          <Select
             value={sex}
             onChange={(value) => {
               setSex(value);
@@ -323,14 +306,13 @@ export function SubmissionsClient() {
           </div>
         ) : null}
         <div className="overflow-auto">
-          <table className="w-full min-w-[1000px] text-left text-sm">
+          <table className="w-full min-w-[900px] text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
                 <th className="p-3">Respondent ID</th>
                 <th className="p-3">BMI</th>
                 <th className="p-3">BMI class</th>
                 <th className="p-3">HDDS</th>
-                <th className="p-3">Double burden</th>
                 <th className="p-3">Quality</th>
                 <th className="p-3">Review</th>
                 <th className="p-3">Submitted</th>
@@ -344,9 +326,6 @@ export function SubmissionsClient() {
                   <td className="p-3">{response.bmi ?? "-"}</td>
                   <td className="p-3">{response.bmiClass || "-"}</td>
                   <td className="p-3">{response.hddsScore ?? "-"}</td>
-                  <td className="p-3">
-                    {response.doubleBurdenFlag ? "Flagged" : "Not flagged"}
-                  </td>
                   <td className="p-3">
                     {response.qualityFlagCount ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
@@ -405,14 +384,14 @@ export function SubmissionsClient() {
               ))}
               {responsePage?.total === 0 ? (
                 <tr>
-                  <td className="p-4 text-center text-slate-500" colSpan={9}>
+                  <td className="p-4 text-center text-slate-500" colSpan={8}>
                     No submissions found.
                   </td>
                 </tr>
               ) : null}
               {responsePage === undefined ? (
                 <tr>
-                  <td className="p-4 text-center text-slate-500" colSpan={9}>
+                  <td className="p-4 text-center text-slate-500" colSpan={8}>
                     Loading...
                   </td>
                 </tr>

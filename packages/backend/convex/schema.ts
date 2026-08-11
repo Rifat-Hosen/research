@@ -15,7 +15,6 @@ export default defineSchema({
     bmi: v.union(v.number(), v.null()),
     bmiClassCode: v.union(v.number(), v.null()),
     hddsScore: v.union(v.number(), v.null()),
-    doubleBurdenFlag: v.union(v.boolean(), v.null()),
     reviewedAt: v.optional(v.number()),
     reviewedBy: v.optional(v.string()),
     adminNotes: v.optional(v.string()),

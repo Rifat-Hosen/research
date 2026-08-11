@@ -87,7 +87,6 @@ function applyFilters(
   filters: {
     search?: string;
     bmiClassCode?: number;
-    doubleBurden?: string;
     sex?: string;
     status?: string;
     fromDate?: string;
@@ -115,13 +114,6 @@ function applyFilters(
       filters.bmiClassCode != null &&
       response.bmiClassCode !== filters.bmiClassCode
     ) {
-      return false;
-    }
-
-    if (filters.doubleBurden === "flagged" && !response.doubleBurdenFlag) {
-      return false;
-    }
-    if (filters.doubleBurden === "not_flagged" && response.doubleBurdenFlag) {
       return false;
     }
 
@@ -176,7 +168,6 @@ function toExportRow(response: any, readable = false) {
     bmiClassCode: response.bmiClassCode ?? "",
     bmiClass: getBmiClassLabel(response.bmiClassCode),
     hddsScore: response.hddsScore ?? "",
-    doubleBurdenFlag: response.doubleBurdenFlag,
     reviewed: Boolean(response.reviewedAt),
     reviewedAt: response.reviewedAt ? new Date(response.reviewedAt).toISOString() : "",
     excludedFromAnalysis: Boolean(response.excludedFromAnalysis),
@@ -187,6 +178,83 @@ function toExportRow(response: any, readable = false) {
     ...(readable ? readableAnswers(response) : answers),
   };
 }
+
+const socioOf = (response: any) => response.sociodemographic ?? {};
+const mealsOf = (response: any) => response.mealPatterns ?? {};
+const psychOf = (response: any) => response.psychosocial ?? {};
+
+function answered(value: unknown) {
+  return value !== undefined && value !== null && value !== "";
+}
+
+function toNumber(value: unknown) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function averageOf(responses: any[], read: (response: any) => unknown) {
+  const values = responses
+    .map((response) => toNumber(read(response)))
+    .filter((value): value is number => value != null);
+  if (!values.length) return null;
+  return (
+    Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 10) /
+    10
+  );
+}
+
+/** Coded-option breakdown, with percentages over respondents who answered. */
+function distributionOf(
+  responses: any[],
+  read: (response: any) => unknown,
+  options: { code: string; label: string }[],
+) {
+  const base = responses.filter((response) => answered(read(response))).length;
+  return options.map((option) => {
+    const count = responses.filter(
+      (response) => String(read(response)) === option.code,
+    ).length;
+    return {
+      ...option,
+      count,
+      percent: base ? Math.round((count / base) * 100) : 0,
+    };
+  });
+}
+
+/** Share of respondents meeting a condition, over those who answered. */
+function shareOf(
+  responses: any[],
+  read: (response: any) => unknown,
+  matches: (value: string) => boolean,
+) {
+  const eligible = responses.filter((response) => answered(read(response)));
+  const count = eligible.filter((response) =>
+    matches(String(read(response))),
+  ).length;
+  return {
+    count,
+    base: eligible.length,
+    percent: eligible.length
+      ? Math.round((count / eligible.length) * 100)
+      : 0,
+  };
+}
+
+const ageBands = [
+  { code: "u20", label: "Under 20", min: 0, max: 19 },
+  { code: "20_24", label: "20-24", min: 20, max: 24 },
+  { code: "25_29", label: "25-29", min: 25, max: 29 },
+  { code: "30_34", label: "30-34", min: 30, max: 34 },
+  { code: "35p", label: "35 and over", min: 35, max: 200 },
+];
+
+/** FANTA dietary-diversity tiers. */
+const hddsTiers = [
+  { code: "low", label: "Low (0-3 groups)", min: 0, max: 3 },
+  { code: "medium", label: "Medium (4-5 groups)", min: 4, max: 5 },
+  { code: "high", label: "High (6+ groups)", min: 6, max: 99 },
+];
 
 export const getDashboardStats = query({
   args: {},
@@ -228,14 +296,6 @@ export const getDashboardStats = query({
       };
     });
 
-    const doubleBurdenCount = responses.filter(
-      (response) =>
-        response.doubleBurdenFlag === true && !response.excludedFromAnalysis,
-    ).length;
-    const doubleBurdenAssessed = responses.filter(
-      (response) =>
-        response.doubleBurdenFlag != null && !response.excludedFromAnalysis,
-    ).length;
     const last7Days = Array.from({ length: 7 }, (_, index) => {
       const dayStart = sevenDaysAgoMs + index * 24 * 60 * 60 * 1000;
       const dayEnd = dayStart + 24 * 60 * 60 * 1000;
@@ -269,16 +329,79 @@ export const getDashboardStats = query({
           : 0,
       };
     });
-    const areaCounts = Array.from(
-      responses.reduce((map, response) => {
-        const area = response.districtArea || "Not collected";
-        map.set(area, (map.get(area) ?? 0) + 1);
-        return map;
-      }, new Map<string, number>()),
-    )
-      .map(([area, count]) => ({ area, count }))
-      .sort((first, second) => second.count - first.count)
-      .slice(0, 5);
+    // Substantive indicators are computed on records included in analysis.
+    const ageDistribution = (() => {
+      const withAge = includedResponses.filter(
+        (response) => toNumber(socioOf(response).A1) != null,
+      );
+      return ageBands.map((band) => {
+        const count = withAge.filter((response) => {
+          const age = toNumber(socioOf(response).A1) ?? -1;
+          return age >= band.min && age <= band.max;
+        }).length;
+        return {
+          code: band.code,
+          label: band.label,
+          count,
+          percent: withAge.length
+            ? Math.round((count / withAge.length) * 100)
+            : 0,
+        };
+      });
+    })();
+
+    const hddsDistribution = (() => {
+      const scored = includedResponses.filter(
+        (response) => response.hddsScore != null,
+      );
+      return hddsTiers.map((tier) => {
+        const count = scored.filter(
+          (response) =>
+            (response.hddsScore ?? -1) >= tier.min &&
+            (response.hddsScore ?? -1) <= tier.max,
+        ).length;
+        return {
+          code: tier.code,
+          label: tier.label,
+          count,
+          percent: scored.length
+            ? Math.round((count / scored.length) * 100)
+            : 0,
+        };
+      });
+    })();
+
+    const overweightObeseCount = includedResponses.filter(
+      (response) => response.bmiClassCode === 2 || response.bmiClassCode === 3,
+    ).length;
+    const underweightCount = includedResponses.filter(
+      (response) => response.bmiClassCode === 0,
+    ).length;
+
+    // Body image (D11) versus measured BMI class, for perception mismatch.
+    const bodyImageMismatch = (() => {
+      const comparable = includedResponses.filter(
+        (response) =>
+          response.bmiClassCode != null &&
+          answered(psychOf(response).D11) &&
+          String(psychOf(response).D11) !== "9",
+      );
+      const perceivedClass = (code: string) =>
+        code === "0" ? 0 : code === "1" ? 1 : 2;
+      const actualClass = (code: number) => (code === 3 ? 2 : code);
+      const count = comparable.filter(
+        (response) =>
+          perceivedClass(String(psychOf(response).D11)) !==
+          actualClass(response.bmiClassCode as number),
+      ).length;
+      return {
+        count,
+        base: comparable.length,
+        percent: comparable.length
+          ? Math.round((count / comparable.length) * 100)
+          : 0,
+      };
+    })();
 
     return {
       total: responses.length,
@@ -328,14 +451,130 @@ export const getDashboardStats = query({
       bmiRecorded: responsesWithBmi.length,
       bmiMissing: responses.length - responsesWithBmi.length,
       bmiDistribution,
-      doubleBurdenCount,
-      doubleBurdenPercent: doubleBurdenAssessed
-        ? Math.round((doubleBurdenCount / doubleBurdenAssessed) * 100)
-        : 0,
-      doubleBurdenAssessed,
+      overweightObese: {
+        count: overweightObeseCount,
+        percent: responsesWithBmi.length
+          ? Math.round((overweightObeseCount / responsesWithBmi.length) * 100)
+          : 0,
+      },
+      underweight: {
+        count: underweightCount,
+        percent: responsesWithBmi.length
+          ? Math.round((underweightCount / responsesWithBmi.length) * 100)
+          : 0,
+      },
+
+      // Section A - respondent profile
+      averageAge: averageOf(includedResponses, (r) => socioOf(r).A1),
+      ageDistribution,
+      educationDistribution: distributionOf(
+        includedResponses,
+        (r) => socioOf(r).A7,
+        [
+          { code: "0", label: "None" },
+          { code: "1", label: "Primary" },
+          { code: "2", label: "SSC" },
+          { code: "3", label: "HSC" },
+          { code: "4", label: "Graduate" },
+          { code: "5", label: "Postgraduate" },
+        ],
+      ),
+      residenceDistribution: distributionOf(
+        includedResponses,
+        (r) => socioOf(r).A12,
+        [
+          { code: "0", label: "Rural" },
+          { code: "1", label: "Urban" },
+          { code: "2", label: "Semi-urban" },
+          { code: "3", label: "Slum" },
+        ],
+      ),
+      foodInsecurity: shareOf(
+        includedResponses,
+        (r) => socioOf(r).A11,
+        (value) => value === "1",
+      ),
+      currentSmoker: shareOf(
+        includedResponses,
+        (r) => socioOf(r).A13,
+        (value) => value === "2",
+      ),
+
+      // Section B - dietary diversity
+      hddsDistribution,
+
+      // Section C - meal patterns
+      averageMealsPerDay: averageOf(includedResponses, (r) => mealsOf(r).C1),
+      breakfastSkipped: shareOf(
+        includedResponses,
+        (r) => mealsOf(r).C2,
+        (value) => value === "0",
+      ),
+      averageSkipDays: averageOf(includedResponses, (r) => mealsOf(r).C3),
+      mostlyOutsideFood: shareOf(
+        includedResponses,
+        (r) => mealsOf(r).C4,
+        (value) => value === "2",
+      ),
+      averageWaterCups: averageOf(includedResponses, (r) => mealsOf(r).C6),
+      irregularMealTiming: shareOf(
+        includedResponses,
+        (r) => mealsOf(r).C10,
+        (value) => value === "0" || value === "1",
+      ),
+
+      // Section D - lifestyle and psychosocial
+      physicalActivityDistribution: distributionOf(
+        includedResponses,
+        (r) => psychOf(r).D8,
+        [
+          { code: "0", label: "No exercise" },
+          { code: "1", label: "Mild" },
+          { code: "2", label: "Moderate" },
+          { code: "3", label: "Extreme" },
+        ],
+      ),
+      averageSittingHours: averageOf(includedResponses, (r) => psychOf(r).D7),
+      averageSleepHours: averageOf(includedResponses, (r) => psychOf(r).D6),
+      poorSleepQuality: shareOf(
+        includedResponses,
+        (r) => psychOf(r).D9,
+        (value) => value === "0" || value === "1",
+      ),
+      depressiveSymptoms: shareOf(
+        includedResponses,
+        (r) => psychOf(r).D1,
+        (value) => value === "2" || value === "3",
+      ),
+      anxietySymptoms: shareOf(
+        includedResponses,
+        (r) => psychOf(r).D2,
+        (value) => value === "2" || value === "3",
+      ),
+      highStress: shareOf(
+        includedResponses,
+        (r) => psychOf(r).D3,
+        (value) => value === "3" || value === "4",
+      ),
+      emotionalOvereating: shareOf(
+        includedResponses,
+        (r) => psychOf(r).D4,
+        (value) => value === "2",
+      ),
+      emotionalUndereating: shareOf(
+        includedResponses,
+        (r) => psychOf(r).D10,
+        (value) => value === "2",
+      ),
+      lowSupport: shareOf(
+        includedResponses,
+        (r) => psychOf(r).D12,
+        (value) => value === "0" || value === "1",
+      ),
+      bodyImageMismatch,
+
       last7Days,
       sexDistribution,
-      areaCounts,
       latest: responses.slice(0, 8).map(withComputedFields),
     };
   },
@@ -346,7 +585,6 @@ const listArgs = {
   limit: v.optional(v.number()),
   page: v.optional(v.number()),
   bmiClassCode: v.optional(v.number()),
-  doubleBurden: v.optional(v.string()),
   sex: v.optional(v.string()),
   status: v.optional(v.string()),
   fromDate: v.optional(v.string()),

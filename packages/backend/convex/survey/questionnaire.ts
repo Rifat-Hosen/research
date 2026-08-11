@@ -97,7 +97,7 @@ export const surveySections: SurveySection[] = [
     id: "sociodemographic",
     title: "A. Sociodemographic and Anthropometry",
     fields: [
-      { id: "A1", label: "Age (completed years)", type: "number", required: true, unit: "years", min: 0, max: 120 },
+      { id: "A1", label: "Age (completed years)", type: "number", required: true, min: 0, max: 120 },
       { id: "A2", label: "Sex", type: "radio", required: true, options: [{ label: "Male [0]", value: "0" }, { label: "Female [1]", value: "1" }, { label: "Other [2]", value: "2" }] },
       { id: "A3", label: "Religion", type: "radio", required: true, options: [{ label: "Islam [0]", value: "0" }, { label: "Hinduism [1]", value: "1" }, { label: "Christian [2]", value: "2" }, { label: "Buddhism [3]", value: "3" }, { label: "Other [4]", value: "4" }] },
       { id: "A4", label: "Occupation", type: "radio", required: true, options: [{ label: "Student [1]", value: "1" }, { label: "Service [2]", value: "2" }, { label: "Business [3]", value: "3" }, { label: "Unemployed [4]", value: "4" }, { label: "Other [5]", value: "5" }, { label: "Homemaker [6]", value: "6" }, { label: "Labour [7]", value: "7" }, { label: "Agriculture [8]", value: "8" }] },
@@ -132,7 +132,7 @@ export const surveySections: SurveySection[] = [
       { id: "C5", label: "Access to clean, safe drinking water", type: "radio", required: true, options: yesNoOptions },
       { id: "C6", label: "Plain water consumed daily", type: "number", required: true, unit: "cups/day", min: 0 },
       { id: "C7", label: "Prescribed/self-selected diet pattern", type: "radio", required: true, options: yesNoOptions },
-      { id: "C7_pattern", label: "If yes, which pattern", type: "checkboxes", options: [{ label: "Vegetarian", value: "vegetarian" }, { label: "Low-salt", value: "low_salt" }, { label: "Diabetic", value: "diabetic" }, { label: "Weight-loss", value: "weight_loss" }, { label: "Other", value: "other" }] },
+      { id: "C7a", label: "If yes, which pattern", type: "checkboxes", options: [{ label: "Vegetarian", value: "vegetarian" }, { label: "Low-salt", value: "low_salt" }, { label: "Diabetic", value: "diabetic" }, { label: "Weight-loss", value: "weight_loss" }, { label: "Other", value: "other" }] },
       { id: "C8", label: "Late-night meals/snacks after 9 PM", type: "radio", required: true, options: frequencyF2Options },
       { id: "C9", label: "Snacks between main meals", type: "radio", required: true, options: frequencyF2Options },
       { id: "C10", label: "Eats meals at about the same time each day", type: "radio", required: true, options: [{ label: "Rarely / irregular [0]", value: "0" }, { label: "Sometimes [1]", value: "1" }, { label: "Mostly regular [2]", value: "2" }, { label: "Always regular [3]", value: "3" }] },

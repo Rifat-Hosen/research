@@ -120,7 +120,6 @@ export function SubmissionDetailClient() {
     bmi: response.bmi ?? "",
     bmiClass: response.bmiClass ?? "",
     hddsScore: response.hddsScore ?? "",
-    doubleBurdenFlag: response.doubleBurdenFlag ? "Flagged" : "Not flagged",
     questionId: row.id,
     question: row.question,
     answer: row.answer,
@@ -202,9 +201,9 @@ export function SubmissionDetailClient() {
           <p className="text-lg font-semibold">{response.hddsScore ?? "-"}</p>
         </div>
         <div>
-          <p className="text-sm text-slate-500">Double burden</p>
+          <p className="text-sm text-slate-500">Quality flags</p>
           <p className="text-lg font-semibold">
-            {response.doubleBurdenFlag ? "Flagged" : "Not flagged"}
+            {response.qualityFlagCount || 0}
           </p>
         </div>
       </section>

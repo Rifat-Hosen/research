@@ -14,8 +14,9 @@ export function QuestionnairePreviewClient() {
         <div>
           <h2 className="text-2xl font-semibold">Questionnaire Preview</h2>
           <p className="text-sm text-slate-600">
-            Compact respondent questionnaire preview. The PDF download is
-            generated as a 2-page A4 manual-fill form with small font size.
+            Preview of all respondent-facing questions and coded answer options.
+            The PDF download is a print-ready A4 manual-fill form with tick
+            boxes and ruled answer lines.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
