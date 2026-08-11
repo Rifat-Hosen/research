@@ -4,16 +4,9 @@ export type SurveyValues = Record<string, string | string[]>;
 
 const sectionKeyById: Record<string, string> = {
   sociodemographic: "sociodemographic",
-  anthropometry: "anthropometry",
-  heiFoodGroups: "heiFoodGroups",
-  heiFatsSodiumSugars: "heiFatsSodiumSugars",
   dietaryDiversity: "dietaryDiversity",
   mealPatterns: "mealPatterns",
-  doubleBurden: "doubleBurden",
-  physicalActivity: "physicalActivity",
-  enumeratorChecks: "enumeratorChecks",
   psychosocial: "psychosocial",
-  nutritionKnowledge: "nutritionKnowledge",
 };
 
 function read(values: SurveyValues, key: string) {
@@ -45,16 +38,10 @@ export function buildSurveyPayload(values: SurveyValues) {
 
   const payload: Record<string, unknown> = {
     respondentId: String(read(values, "respondentId") || fallbackRespondentId()),
-    email: String(read(values, "email")),
     date,
     districtArea: String(read(values, "districtArea") || "Not collected"),
     interviewerCode: String(read(values, "interviewerCode") || "WEB"),
     consentGiven: read(values, "C0") === "1",
-    notes: String(read(values, "notes")),
-    heiScore:
-      String(read(values, "heiScore")).trim() === ""
-        ? null
-        : Number(read(values, "heiScore")),
   };
 
   for (const [sectionId, key] of Object.entries(sectionKeyById)) {

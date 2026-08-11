@@ -31,18 +31,18 @@ function yes(value: unknown) {
 
 export function calculateHdds(dietaryDiversity: Record<string, unknown> = {}) {
   const groups = [
-    ["E1"],
-    ["E2"],
-    ["E3", "E4", "E5"],
-    ["E6", "E7"],
-    ["E8", "E9"],
-    ["E10"],
-    ["E11"],
-    ["E12"],
-    ["E13"],
-    ["E14"],
-    ["E15"],
-    ["E16"],
+    ["B1"],
+    ["B2"],
+    ["B3", "B4", "B5"],
+    ["B6", "B7"],
+    ["B8", "B9"],
+    ["B10"],
+    ["B11"],
+    ["B12"],
+    ["B13"],
+    ["B14"],
+    ["B15"],
+    ["B16"],
   ];
 
   return groups.reduce(
@@ -50,24 +50,4 @@ export function calculateHdds(dietaryDiversity: Record<string, unknown> = {}) {
       score + (group.some((fieldId) => yes(dietaryDiversity[fieldId])) ? 1 : 0),
     0,
   );
-}
-
-export function calculateDoubleBurdenFlag(args: {
-  bmiClassCode?: BmiClassCode | null;
-  doubleBurden?: Record<string, unknown>;
-}) {
-  const hasOvernutrition =
-    args.bmiClassCode === 2 ||
-    args.bmiClassCode === 3 ||
-    args.doubleBurden?.G6 === "1" ||
-    args.doubleBurden?.G7 === "1" ||
-    args.doubleBurden?.G8 === "1";
-  const hasUndernutrition =
-    args.bmiClassCode === 0 ||
-    args.doubleBurden?.G1 === "1" ||
-    args.doubleBurden?.G2 === "1" ||
-    args.doubleBurden?.G4 === "1" ||
-    args.doubleBurden?.G5 === "0";
-
-  return hasOvernutrition && hasUndernutrition;
 }

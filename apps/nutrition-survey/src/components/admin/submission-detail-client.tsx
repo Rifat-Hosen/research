@@ -15,16 +15,9 @@ import { downloadSurveyRows } from "@/lib/export";
 
 const sectionKeyById: Record<string, string> = {
   sociodemographic: "sociodemographic",
-  anthropometry: "anthropometry",
-  heiFoodGroups: "heiFoodGroups",
-  heiFatsSodiumSugars: "heiFatsSodiumSugars",
   dietaryDiversity: "dietaryDiversity",
   mealPatterns: "mealPatterns",
-  doubleBurden: "doubleBurden",
-  physicalActivity: "physicalActivity",
-  enumeratorChecks: "enumeratorChecks",
   psychosocial: "psychosocial",
-  nutritionKnowledge: "nutritionKnowledge",
 };
 
 function valueAsString(value: unknown) {
@@ -43,7 +36,7 @@ function heightFromCm(value: unknown) {
 }
 
 function answerLabel(field: SurveyField, value: unknown) {
-  if (field.id === "B1") return heightFromCm(value);
+  if (field.id === "A15") return heightFromCm(value);
 
   if (field.options?.length) {
     const labelByValue = new Map(
@@ -124,8 +117,6 @@ export function SubmissionDetailClient() {
   const rows = answerRows(response);
   const singleExportRows = rows.map((row) => ({
     respondentId: response.respondentId,
-    email: response.email,
-    name: response.name,
     bmi: response.bmi ?? "",
     bmiClass: response.bmiClass ?? "",
     hddsScore: response.hddsScore ?? "",
@@ -163,7 +154,9 @@ export function SubmissionDetailClient() {
           <h2 className="text-2xl font-semibold">
             Submission {response.respondentId}
           </h2>
-          <p className="text-sm text-slate-600">{response.email}</p>
+          <p className="text-sm text-slate-600">
+            {response.districtArea} - {response.date}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -319,12 +312,6 @@ export function SubmissionDetailClient() {
           </table>
         </div>
       </section>
-      {response.notes ? (
-        <section className="rounded-lg border bg-white p-4">
-          <h3 className="font-semibold">Notes</h3>
-          <p className="mt-2 text-sm text-slate-700">{response.notes}</p>
-        </section>
-      ) : null}
     </div>
   );
 }

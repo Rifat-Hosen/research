@@ -331,17 +331,11 @@ export function DashboardClient() {
               tone="emerald"
             />
           </div>
-          <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="mt-5">
             <div className="rounded-xl bg-slate-50 p-4">
               <p className="text-xs text-slate-500">Average HDDS</p>
               <p className="mt-1 text-2xl font-semibold">
                 {display(stats.averageHdds)}
-              </p>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-xs text-slate-500">Average HEI</p>
-              <p className="mt-1 text-2xl font-semibold">
-                {display(stats.averageHei)}
               </p>
             </div>
           </div>
@@ -425,12 +419,10 @@ export function DashboardClient() {
           </div>
         </div>
         <div className="overflow-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
+          <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
                 <th className="p-3">Respondent</th>
-                <th className="p-3">Name</th>
-                <th className="p-3">Email</th>
                 <th className="p-3">BMI</th>
                 <th className="p-3">HDDS</th>
                 <th className="p-3">Double burden</th>
@@ -444,8 +436,6 @@ export function DashboardClient() {
               {stats.latest.map((response: any) => (
                 <tr key={response._id} className="border-t">
                   <td className="p-3 font-medium">{response.respondentId}</td>
-                  <td className="p-3">{response.name || "-"}</td>
-                  <td className="p-3">{response.email}</td>
                   <td className="p-3">{response.bmi ?? "-"}</td>
                   <td className="p-3">{response.hddsScore ?? "-"}</td>
                   <td className="p-3">
@@ -480,7 +470,7 @@ export function DashboardClient() {
               ))}
               {stats.latest.length === 0 ? (
                 <tr>
-                  <td className="p-4 text-center text-slate-500" colSpan={10}>
+                  <td className="p-4 text-center text-slate-500" colSpan={8}>
                     No submissions yet.
                   </td>
                 </tr>

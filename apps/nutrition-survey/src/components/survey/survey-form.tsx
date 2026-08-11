@@ -84,7 +84,7 @@ function feetInchesToCm(feet: string, inches: string) {
 }
 
 function reviewValue(field: SurveyField, value: string | string[] | undefined) {
-  if (field.id === "B1") {
+  if (field.id === "A15") {
     const heightParts = heightPartsFromCm(value);
     if (!heightParts.feet && !heightParts.inches) return "";
     return `${heightParts.feet || "0"} ft ${heightParts.inches || "0"} inch`;
@@ -119,7 +119,7 @@ function FieldInput({
 }) {
   const inputId = `field-${field.id}`;
 
-  if (field.id === "B1") {
+  if (field.id === "A15") {
     const heightParts = heightPartsFromCm(value);
     const cmValue = valueAsString(value);
 
@@ -294,13 +294,6 @@ export function SurveyForm() {
         nextErrors[field.id] = "Required";
       }
 
-      if (field.type === "email" && valueAsString(value)) {
-        const email = valueAsString(value).trim();
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          nextErrors[field.id] = "Enter a valid email";
-        }
-      }
-
       if (field.type === "number" && valueAsString(value)) {
         const parsed = Number(valueAsString(value));
         if (!Number.isFinite(parsed)) {
@@ -381,10 +374,11 @@ export function SurveyForm() {
             />
           </div>
           <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            This survey is being collected for academic research purposes.
-            Please submit the form only once using your own email address, and
-            provide accurate information as much as possible. Duplicate or
-            incorrect responses may affect the quality of the research results.
+            This survey is being collected for academic research purposes and is
+            completely anonymous - no name or email is collected. Please submit
+            the form only once and provide accurate information as much as
+            possible. Duplicate or incorrect responses may affect the quality of
+            the research results.
           </div>
         </div>
 

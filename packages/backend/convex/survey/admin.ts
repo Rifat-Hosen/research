@@ -5,32 +5,11 @@ import { getBmiClassLabel } from "./scoring";
 
 const targetSampleSize = 500;
 
-const sectionKeys = [
-  "sociodemographic",
-  "anthropometry",
-  "heiFoodGroups",
-  "heiFatsSodiumSugars",
-  "dietaryDiversity",
-  "mealPatterns",
-  "doubleBurden",
-  "physicalActivity",
-  "enumeratorChecks",
-  "psychosocial",
-  "nutritionKnowledge",
-];
-
 const sectionKeyById: Record<string, string> = {
   sociodemographic: "sociodemographic",
-  anthropometry: "anthropometry",
-  heiFoodGroups: "heiFoodGroups",
-  heiFatsSodiumSugars: "heiFatsSodiumSugars",
   dietaryDiversity: "dietaryDiversity",
   mealPatterns: "mealPatterns",
-  doubleBurden: "doubleBurden",
-  physicalActivity: "physicalActivity",
-  enumeratorChecks: "enumeratorChecks",
   psychosocial: "psychosocial",
-  nutritionKnowledge: "nutritionKnowledge",
 };
 
 function valueAsString(value: unknown) {
@@ -66,12 +45,11 @@ function readableAnswers(response: any) {
 
 function getQualityFlags(response: any) {
   const flags: string[] = [];
-  const age = Number(response.sociodemographic?.A2);
-  const heightCm = Number(response.anthropometry?.B1);
-  const weightKg = Number(response.anthropometry?.B2);
+  const age = Number(response.sociodemographic?.A1);
+  const heightCm = Number(response.sociodemographic?.A15);
+  const weightKg = Number(response.sociodemographic?.A16);
 
-  if (!response.emailNormalized) flags.push("Missing normalized email");
-  if (!response.name) flags.push("Missing name");
+  if (!response.respondentId) flags.push("Missing respondent ID");
   if (Number.isFinite(age) && (age < 18 || age > 35)) {
     flags.push("Age outside likely university-student range");
   }
@@ -125,12 +103,7 @@ function applyFilters(
   return responses.filter((response) => {
     if (
       search &&
-      ![
-        response.respondentId,
-        response.email,
-        response.name,
-        response.districtArea,
-      ]
+      ![response.respondentId, response.districtArea]
         .join(" ")
         .toLowerCase()
         .includes(search)
@@ -152,7 +125,7 @@ function applyFilters(
       return false;
     }
 
-    if (filters.sex && response.sociodemographic?.A3 !== filters.sex) {
+    if (filters.sex && response.sociodemographic?.A2 !== filters.sex) {
       return false;
     }
 
@@ -187,23 +160,14 @@ function sortResponses(responses: any[], sortBy?: string, sortDir?: string) {
 function toExportRow(response: any, readable = false) {
   const sections = [
     response.sociodemographic,
-    response.anthropometry,
-    response.heiFoodGroups,
-    response.heiFatsSodiumSugars,
     response.dietaryDiversity,
     response.mealPatterns,
-    response.doubleBurden,
-    response.physicalActivity,
-    response.enumeratorChecks,
     response.psychosocial,
-    response.nutritionKnowledge,
   ];
   const answers = Object.assign({}, ...sections);
 
   return {
     respondentId: response.respondentId,
-    email: response.email,
-    name: response.name,
     date: response.date,
     districtArea: response.districtArea,
     interviewerCode: response.interviewerCode,
@@ -212,7 +176,6 @@ function toExportRow(response: any, readable = false) {
     bmiClassCode: response.bmiClassCode ?? "",
     bmiClass: getBmiClassLabel(response.bmiClassCode),
     hddsScore: response.hddsScore ?? "",
-    heiScore: response.heiScore ?? "",
     doubleBurdenFlag: response.doubleBurdenFlag,
     reviewed: Boolean(response.reviewedAt),
     reviewedAt: response.reviewedAt ? new Date(response.reviewedAt).toISOString() : "",
@@ -222,7 +185,6 @@ function toExportRow(response: any, readable = false) {
     qualityFlags: getQualityFlags(response).join("; "),
     createdAt: new Date(response.createdAt).toISOString(),
     ...(readable ? readableAnswers(response) : answers),
-    notes: response.notes,
   };
 }
 
@@ -296,7 +258,7 @@ export const getDashboardStats = query({
     ].map((item) => {
       const count = responses.filter(
         (response) =>
-          response.sociodemographic?.A3 === item.code &&
+          response.sociodemographic?.A2 === item.code &&
           !response.excludedFromAnalysis,
       ).length;
       return {
@@ -362,11 +324,6 @@ export const getDashboardStats = query({
         includedResponses
           .filter((response) => response.hddsScore != null)
           .map((response) => response.hddsScore ?? 0),
-      ),
-      averageHei: average(
-        includedResponses
-          .filter((response) => response.heiScore != null)
-          .map((response) => response.heiScore ?? 0),
       ),
       bmiRecorded: responsesWithBmi.length,
       bmiMissing: responses.length - responsesWithBmi.length,

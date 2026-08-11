@@ -218,7 +218,7 @@ export function SubmissionsClient() {
                 setSearch(event.target.value);
                 setPage(1);
               }}
-              placeholder="Search respondent, email, name, or area"
+              placeholder="Search respondent ID or area"
               className="bg-white pl-9"
             />
           </div>
@@ -294,8 +294,7 @@ export function SubmissionsClient() {
             <option value="createdAt">Sort by submitted date</option>
             <option value="bmi">Sort by BMI</option>
             <option value="hddsScore">Sort by HDDS</option>
-            <option value="heiScore">Sort by HEI</option>
-            <option value="name">Sort by name</option>
+            <option value="respondentId">Sort by respondent ID</option>
           </Select>
           <div className="flex gap-2">
             <Select value={sortDir} onChange={setSortDir} className="flex-1">
@@ -324,12 +323,10 @@ export function SubmissionsClient() {
           </div>
         ) : null}
         <div className="overflow-auto">
-          <table className="w-full min-w-[1220px] text-left text-sm">
+          <table className="w-full min-w-[1000px] text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
                 <th className="p-3">Respondent ID</th>
-                <th className="p-3">Name</th>
-                <th className="p-3">Email</th>
                 <th className="p-3">BMI</th>
                 <th className="p-3">BMI class</th>
                 <th className="p-3">HDDS</th>
@@ -344,8 +341,6 @@ export function SubmissionsClient() {
               {rows.map((response: any) => (
                 <tr key={response._id} className="border-t align-top">
                   <td className="p-3 font-medium">{response.respondentId}</td>
-                  <td className="p-3">{response.name || "-"}</td>
-                  <td className="p-3">{response.email}</td>
                   <td className="p-3">{response.bmi ?? "-"}</td>
                   <td className="p-3">{response.bmiClass || "-"}</td>
                   <td className="p-3">{response.hddsScore ?? "-"}</td>
@@ -410,14 +405,14 @@ export function SubmissionsClient() {
               ))}
               {responsePage?.total === 0 ? (
                 <tr>
-                  <td className="p-4 text-center text-slate-500" colSpan={11}>
+                  <td className="p-4 text-center text-slate-500" colSpan={9}>
                     No submissions found.
                   </td>
                 </tr>
               ) : null}
               {responsePage === undefined ? (
                 <tr>
-                  <td className="p-4 text-center text-slate-500" colSpan={11}>
+                  <td className="p-4 text-center text-slate-500" colSpan={9}>
                     Loading...
                   </td>
                 </tr>

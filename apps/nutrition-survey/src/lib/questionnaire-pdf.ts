@@ -59,7 +59,7 @@ function manualAnswerText(field: (typeof visibleSections)[number]["fields"][numb
     return "Answer: ______________________________________________";
   }
 
-  if (field.id === "B1") {
+  if (field.id === "A15") {
     return "Answer: _____ ft _____ inch";
   }
 
