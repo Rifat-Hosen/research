@@ -11,14 +11,14 @@ const visibleSections = surveySections.filter(
 
 const pageWidth = 595.28;
 const pageHeight = 841.89;
-const marginX = 34;
-const headerHeight = 34;
-const columnGap = 16;
+const marginX = 28;
+const headerHeight = 30;
+const columnGap = 14;
 const columnCount = 2;
 const contentWidth = pageWidth - marginX * 2;
 const columnWidth =
   (contentWidth - columnGap * (columnCount - 1)) / columnCount;
-const contentTop = pageHeight - headerHeight - 16;
+const contentTop = pageHeight - headerHeight - 13;
 const contentBottom = 30;
 
 const brandGreen = "0.06 0.40 0.27";
@@ -216,23 +216,93 @@ class Doc {
   }
 }
 
-const questionSize = 10.8;
-const optionSize = 9.8;
-const questionLeading = 13.1;
-const optionLeading = 14;
-const boxSize = 8.4;
-const optionGap = 8;
-const answerIndent = 10;
+type Metrics = {
+  questionSize: number;
+  optionSize: number;
+  sectionTitleSize: number;
+  descriptionSize: number;
+  questionLeading: number;
+  optionLeading: number;
+  ruleLeading: number;
+  descriptionLeading: number;
+  boxSize: number;
+  optionGap: number;
+  answerIndent: number;
+  fieldGap: number;
+  optionBlockGap: number;
+  sectionBandHeight: number;
+  sectionHeadingAdvance: number;
+  sectionGap: number;
+};
+
+const baseMetrics: Metrics = {
+  questionSize: 10.8,
+  optionSize: 9.8,
+  sectionTitleSize: 11.4,
+  descriptionSize: 7.6,
+  questionLeading: 13.1,
+  optionLeading: 14,
+  ruleLeading: 14,
+  descriptionLeading: 9,
+  boxSize: 8.4,
+  optionGap: 8,
+  answerIndent: 10,
+  fieldGap: 4,
+  optionBlockGap: 5,
+  sectionBandHeight: 19,
+  sectionHeadingAdvance: 24,
+  sectionGap: 6,
+};
+
+/**
+ * Squeeze the vertical rhythm harder than the type size, so a form that runs
+ * slightly long loses whitespace before it loses legibility. Leading is floored
+ * relative to its own font size so lines can never collide.
+ */
+function metricsFor(density: number): Metrics {
+  const fontScale = 1 - (1 - density) * 0.45;
+  const questionSize = baseMetrics.questionSize * fontScale;
+  const optionSize = baseMetrics.optionSize * fontScale;
+
+  return {
+    questionSize,
+    optionSize,
+    sectionTitleSize: baseMetrics.sectionTitleSize * fontScale,
+    descriptionSize: baseMetrics.descriptionSize * fontScale,
+    questionLeading: Math.max(
+      questionSize * 1.09,
+      baseMetrics.questionLeading * density,
+    ),
+    optionLeading: Math.max(
+      optionSize * 1.16,
+      baseMetrics.optionLeading * density,
+    ),
+    ruleLeading: Math.max(
+      optionSize * 1.2,
+      baseMetrics.ruleLeading * density,
+    ),
+    descriptionLeading: baseMetrics.descriptionLeading * density,
+    boxSize: baseMetrics.boxSize * fontScale,
+    optionGap: baseMetrics.optionGap * density,
+    answerIndent: baseMetrics.answerIndent * density,
+    fieldGap: baseMetrics.fieldGap * density,
+    optionBlockGap: baseMetrics.optionBlockGap * density,
+    sectionBandHeight: baseMetrics.sectionBandHeight * fontScale,
+    sectionHeadingAdvance: baseMetrics.sectionHeadingAdvance * density,
+    sectionGap: baseMetrics.sectionGap * density,
+  };
+}
 
 /** Lay out one field's options into rows that fit the column width. */
-function optionRows(field: SurveyField) {
-  const available = columnWidth - answerIndent;
+function optionRows(field: SurveyField, m: Metrics) {
+  const available = columnWidth - m.answerIndent;
   const rows: { label: string; width: number }[][] = [];
   let row: { label: string; width: number }[] = [];
   let used = 0;
 
   for (const option of field.options ?? []) {
-    const width = boxSize + 4 + measure(option.label, optionSize) + optionGap;
+    const width =
+      m.boxSize + 4 + measure(option.label, m.optionSize) + m.optionGap;
     if (row.length && used + width > available) {
       rows.push(row);
       row = [];
@@ -251,94 +321,108 @@ function answerRuleCount(field: SurveyField) {
   return 1;
 }
 
-function fieldHeight(field: SurveyField, questionLines: number) {
-  const head = questionLines * questionLeading;
+function fieldHeight(field: SurveyField, questionLines: number, m: Metrics) {
+  const head = questionLines * m.questionLeading;
   if (field.options?.length) {
-    return head + optionRows(field).length * optionLeading + 5;
+    return (
+      head + optionRows(field, m).length * m.optionLeading + m.optionBlockGap
+    );
   }
-  return head + answerRuleCount(field) * 14 + 4;
+  return head + answerRuleCount(field) * m.ruleLeading + m.fieldGap;
 }
 
-function drawField(doc: Doc, field: SurveyField) {
+function drawField(doc: Doc, field: SurveyField, m: Metrics) {
   const prefix = `${field.id}.`;
-  const prefixWidth = measure(prefix, questionSize, true) + 4;
+  const prefixWidth = measure(prefix, m.questionSize, true) + 4;
   const unit = field.unit ? ` (${field.unit})` : "";
   const label = `${field.label}${unit}`;
   // Leave room for the required marker drawn after the final line.
   const textWidth = columnWidth - prefixWidth - (field.required ? 8 : 0);
 
-  const lines = wrapIndented(label, textWidth, textWidth, questionSize);
+  const lines = wrapIndented(label, textWidth, textWidth, m.questionSize);
 
-  doc.reserve(fieldHeight(field, lines.length));
+  doc.reserve(fieldHeight(field, lines.length, m));
   const left = doc.x;
 
   lines.forEach((line, index) => {
     if (index === 0) {
-      doc.text(prefix, left, doc.y, questionSize, brandGreen, true);
+      doc.text(prefix, left, doc.y, m.questionSize, brandGreen, true);
     }
-    doc.text(line, left + prefixWidth, doc.y, questionSize);
+    doc.text(line, left + prefixWidth, doc.y, m.questionSize);
     if (field.required && index === lines.length - 1) {
       doc.text(
         "*",
-        left + prefixWidth + measure(line, questionSize) + 2,
+        left + prefixWidth + measure(line, m.questionSize) + 2,
         doc.y,
-        questionSize,
+        m.questionSize,
         requiredRed,
         true,
       );
     }
-    doc.y -= questionLeading;
+    doc.y -= m.questionLeading;
   });
 
   if (field.options?.length) {
-    for (const row of optionRows(field)) {
-      let x = left + answerIndent;
+    for (const row of optionRows(field, m)) {
+      let x = left + m.answerIndent;
       for (const option of row) {
-        doc.checkbox(x, doc.y - 1, boxSize);
-        doc.text(option.label, x + boxSize + 3, doc.y, optionSize, optionText);
+        doc.checkbox(x, doc.y - 1, m.boxSize);
+        doc.text(
+          option.label,
+          x + m.boxSize + 3,
+          doc.y,
+          m.optionSize,
+          optionText,
+        );
         x += option.width;
       }
-      doc.y -= optionLeading;
+      doc.y -= m.optionLeading;
     }
-    doc.y -= 4;
+    doc.y -= m.fieldGap;
     return;
   }
 
   // Open-value answers get real rules to write on.
   if (field.id === "A15") {
     const segment = 58;
-    doc.line(left + answerIndent, doc.y - 2, segment);
-    doc.text("ft", left + answerIndent + segment + 4, doc.y, optionSize, mutedText);
-    const second = left + answerIndent + segment + 20;
+    doc.line(left + m.answerIndent, doc.y - 2, segment);
+    doc.text(
+      "ft",
+      left + m.answerIndent + segment + 4,
+      doc.y,
+      m.optionSize,
+      mutedText,
+    );
+    const second = left + m.answerIndent + segment + 20;
     doc.line(second, doc.y - 2, segment);
-    doc.text("inch", second + segment + 4, doc.y, optionSize, mutedText);
-    doc.y -= 14;
+    doc.text("inch", second + segment + 4, doc.y, m.optionSize, mutedText);
+    doc.y -= m.ruleLeading;
   } else {
     const rules = answerRuleCount(field);
-    const unitWidth = field.unit ? measure(field.unit, optionSize) + 8 : 0;
+    const unitWidth = field.unit ? measure(field.unit, m.optionSize) + 8 : 0;
     const width =
       field.type === "textarea"
-        ? columnWidth - answerIndent
-        : Math.min(150, columnWidth - answerIndent - unitWidth);
+        ? columnWidth - m.answerIndent
+        : Math.min(150, columnWidth - m.answerIndent - unitWidth);
     for (let index = 0; index < rules; index += 1) {
-      doc.line(left + answerIndent, doc.y - 2, width);
+      doc.line(left + m.answerIndent, doc.y - 2, width);
       if (index === 0 && field.unit && field.type !== "textarea") {
         doc.text(
           field.unit,
-          left + answerIndent + width + 5,
+          left + m.answerIndent + width + 5,
           doc.y,
-          optionSize,
+          m.optionSize,
           mutedText,
         );
       }
-      doc.y -= 14;
+      doc.y -= m.ruleLeading;
     }
   }
 
-  doc.y -= 4;
+  doc.y -= m.fieldGap;
 }
 
-function buildDocument(columnTarget = fullColumnHeight) {
+function buildDocument(m: Metrics, columnTarget = fullColumnHeight) {
   const doc = new Doc(columnTarget);
 
   // Title block spans both columns on the first page only.
@@ -368,26 +452,33 @@ function buildDocument(columnTarget = fullColumnHeight) {
 
   for (const section of visibleSections) {
     // Keep a section heading with at least the start of its first question.
-    doc.reserve(62);
+    doc.reserve(m.sectionHeadingAdvance + m.questionLeading * 2.9);
 
-    doc.rect(doc.x - 5, doc.y - 5.5, columnWidth + 10, 19, bandGreen);
-    doc.rect(doc.x - 5, doc.y - 5.5, 2.6, 19, brandGreen);
-    doc.text(section.title, doc.x + 1, doc.y, 11.4, "0.02 0.30 0.20", true);
-    doc.y -= 24;
+    doc.rect(doc.x - 5, doc.y - 5.5, columnWidth + 10, m.sectionBandHeight, bandGreen);
+    doc.rect(doc.x - 5, doc.y - 5.5, 2.6, m.sectionBandHeight, brandGreen);
+    doc.text(
+      section.title,
+      doc.x + 1,
+      doc.y,
+      m.sectionTitleSize,
+      "0.02 0.30 0.20",
+      true,
+    );
+    doc.y -= m.sectionHeadingAdvance;
 
     if (section.description) {
-      for (const line of wrap(section.description, columnWidth, 7.6)) {
-        doc.text(line, doc.x, doc.y, 7.6, mutedText);
-        doc.y -= 9;
+      for (const line of wrap(section.description, columnWidth, m.descriptionSize)) {
+        doc.text(line, doc.x, doc.y, m.descriptionSize, mutedText);
+        doc.y -= m.descriptionLeading;
       }
-      doc.y -= 4;
+      doc.y -= m.fieldGap;
     }
 
     for (const field of section.fields) {
-      drawField(doc, field);
+      drawField(doc, field, m);
     }
 
-    doc.y -= 6;
+    doc.y -= m.sectionGap;
   }
 
   return doc.pages;
@@ -416,26 +507,37 @@ function decoratePage(ops: Page, pageNumber: number, pageCount: number) {
 }
 
 const maxPages = 2;
+/** Floor on compression: ~9.7pt question text, which still prints legibly. */
+const minDensity = 0.76;
 
 /**
- * Fill each column only as much as needed, so the last column is not left
- * empty. Uses the tightest column height that still fits within maxPages,
- * falling back to full-height columns if the content cannot be squeezed in.
+ * Pick the loosest layout that still fits maxPages, then balance the columns.
+ *
+ * Density is searched first and coarsely-to-finely: every step tightens leading
+ * and gaps (and, at roughly half that rate, the type size), so the form only
+ * gives up as much air as it has to. Column balancing runs afterwards at the
+ * chosen density so the final column is not left half empty.
  */
 function layoutWithinPageLimit() {
-  const full = buildDocument();
-  if (full.length > maxPages) return full;
+  let metrics = metricsFor(minDensity);
 
-  let best = full;
-  for (let target = 240; target <= fullColumnHeight; target += 4) {
-    const attempt = buildDocument(target);
-    if (attempt.length <= maxPages) {
-      best = attempt;
+  for (let density = 1; density >= minDensity; density -= 0.01) {
+    const candidate = metricsFor(density);
+    if (buildDocument(candidate).length <= maxPages) {
+      metrics = candidate;
       break;
     }
   }
 
-  return best;
+  const full = buildDocument(metrics);
+  if (full.length > maxPages) return full;
+
+  for (let target = 240; target <= fullColumnHeight; target += 6) {
+    const attempt = buildDocument(metrics, target);
+    if (attempt.length <= maxPages) return attempt;
+  }
+
+  return full;
 }
 
 function createPdfBlob() {
