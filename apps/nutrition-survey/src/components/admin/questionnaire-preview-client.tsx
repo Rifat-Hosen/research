@@ -33,8 +33,7 @@ export function QuestionnairePreviewClient() {
             Research Survey Form
           </p>
           <h3 className="mt-1 text-lg font-semibold">
-            Healthy Eating Index, Double Burden of Malnutrition and BMI among
-            Adults
+            Healthy Eating Index and Its Association with BMI Among Adults
           </h3>
           <p className="mt-1 text-xs text-emerald-50 print:text-slate-600">
             Admin preview of all respondent-facing questions and coded answer

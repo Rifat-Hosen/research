@@ -75,15 +75,6 @@ const dietaryDiversityFields: SurveyField[] = [
 
 export const surveySections: SurveySection[] = [
   {
-    id: "consent",
-    title: "Consent",
-    description:
-      "Please read before continuing: The information collected in this survey will be used only for academic research on healthy eating, double burden of malnutrition, and BMI among adults. Your responses will be analyzed in summary form. The data will not be used for any personal, commercial, or harmful purpose, and your personal identity will not be published. Participation is voluntary, and you may stop at any time.",
-    fields: [
-      { id: "C0", label: "I have read the information above and agree to participate", type: "radio", required: true, options: yesNoOptions },
-    ],
-  },
-  {
     id: "metadata",
     title: "Respondent Metadata",
     fields: [
@@ -156,6 +147,15 @@ export const surveySections: SurveySection[] = [
       { id: "D10", label: "Do you eat less or skip meals when you feel low or anxious?", type: "radio", required: true, options: noSometimesYesOptions },
       { id: "D11", label: "Do you think your current weight is", type: "radio", required: true, options: [{ label: "Underweight [0]", value: "0" }, { label: "About right [1]", value: "1" }, { label: "Overweight [2]", value: "2" }, { label: "Don't know [9]", value: "9" }] },
       { id: "D12", label: "When you need help, how much support do you get from family or friends?", type: "radio", required: true, options: [{ label: "None [0]", value: "0" }, { label: "A little [1]", value: "1" }, { label: "Some [2]", value: "2" }, { label: "A lot [3]", value: "3" }] },
+    ],
+  },
+  {
+    id: "consent",
+    title: "Consent",
+    description:
+      "Please read before continuing: The information collected in this survey will be used only for academic research on healthy eating, double burden of malnutrition, and BMI among adults. Your responses will be analyzed in summary form. The data will not be used for any personal, commercial, or harmful purpose, and your personal identity will not be published. Participation is voluntary, and you may stop at any time.",
+    fields: [
+      { id: "C0", label: "I have read the information above and agree to participate", type: "radio", required: true, options: yesNoOptions },
     ],
   },
 ];

@@ -436,7 +436,7 @@ function buildDocument(m: Metrics, columnTarget = fullColumnHeight) {
   );
   doc.y -= 14;
   doc.text(
-    "Healthy Eating Index and BMI among Adults",
+    "Healthy Eating Index and Its Association with BMI Among Adults",
     marginX,
     doc.y,
     9.6,

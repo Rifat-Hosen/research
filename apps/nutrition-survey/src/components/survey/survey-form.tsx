@@ -356,7 +356,8 @@ export function SurveyForm() {
                 Nutrition Assessment
               </p>
               <h1 className="mt-1 text-2xl font-semibold">
-                Healthy Eating Index, Double Burden of Malnutrition and BMI
+                Healthy Eating Index and Its Association with BMI Among
+                Adults
               </h1>
               <p className="mt-2 text-sm text-slate-600">
                 Complete each section, review the answers, then submit.
