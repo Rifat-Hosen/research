@@ -12,38 +12,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { downloadSurveyRows } from "@/lib/export";
 import { surveyApi } from "@/lib/convex-api";
+import {
+  OptionList,
+  Select,
+  ageBandOptions,
+  bmiClassOptions,
+  ckdOptions,
+  compactArgs,
+  hddsTierOptions,
+  qualityOptions,
+  residenceOptions,
+  sexOptions,
+} from "./filter-controls";
 
 const pageSize = 25;
-
-function compactArgs(args: Record<string, unknown>) {
-  return Object.fromEntries(
-    Object.entries(args).filter(
-      ([, value]) => value !== "" && value !== undefined && value !== null,
-    ),
-  );
-}
-
-function Select({
-  value,
-  onChange,
-  children,
-  className = "",
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className={`h-10 rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-emerald-600 ${className}`}
-    >
-      {children}
-    </select>
-  );
-}
 
 export function SubmissionsClient() {
   const [search, setSearch] = useState("");
@@ -55,6 +37,12 @@ export function SubmissionsClient() {
   const [toDate, setToDate] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortDir, setSortDir] = useState("desc");
+  const [ckd, setCkd] = useState("");
+  const [residence, setResidence] = useState("");
+  const [hddsTier, setHddsTier] = useState("");
+  const [ageBand, setAgeBand] = useState("");
+  const [quality, setQuality] = useState("");
+  const [interviewerCode, setInterviewerCode] = useState("");
   const [busyId, setBusyId] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
@@ -74,6 +62,12 @@ export function SubmissionsClient() {
         toDate,
         sortBy,
         sortDir,
+        ckd,
+        residence,
+        hddsTier,
+        ageBand,
+        quality,
+        interviewerCode,
       }),
     [
       search,
@@ -85,6 +79,12 @@ export function SubmissionsClient() {
       toDate,
       sortBy,
       sortDir,
+      ckd,
+      residence,
+      hddsTier,
+      ageBand,
+      quality,
+      interviewerCode,
     ],
   );
   const exportArgs = useMemo(
@@ -98,6 +98,12 @@ export function SubmissionsClient() {
         toDate,
         sortBy,
         sortDir,
+        ckd,
+        residence,
+        hddsTier,
+        ageBand,
+        quality,
+        interviewerCode,
       }),
     [
       search,
@@ -108,6 +114,12 @@ export function SubmissionsClient() {
       toDate,
       sortBy,
       sortDir,
+      ckd,
+      residence,
+      hddsTier,
+      ageBand,
+      quality,
+      interviewerCode,
     ],
   );
 
@@ -131,8 +143,36 @@ export function SubmissionsClient() {
     setToDate("");
     setSortBy("createdAt");
     setSortDir("desc");
+    setCkd("");
+    setResidence("");
+    setHddsTier("");
+    setAgeBand("");
+    setQuality("");
+    setInterviewerCode("");
     setPage(1);
   }
+
+  /** Every filter change returns to the first page. */
+  function filterSetter(set: (value: string) => void) {
+    return (value: string) => {
+      set(value);
+      setPage(1);
+    };
+  }
+
+  const activeFilterCount = [
+    bmiClassCode,
+    sex,
+    status,
+    fromDate,
+    toDate,
+    ckd,
+    residence,
+    hddsTier,
+    ageBand,
+    quality,
+    interviewerCode,
+  ].filter(Boolean).length;
 
   function openDeleteModal(response: any) {
     setDeleteTarget(response);
@@ -247,47 +287,78 @@ export function SubmissionsClient() {
           </Select>
         </div>
 
-        <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           <Select
             value={bmiClassCode}
-            onChange={(value) => {
-              setBmiClassCode(value);
-              setPage(1);
-            }}
+            onChange={filterSetter(setBmiClassCode)}
+            ariaLabel="BMI class"
           >
-            <option value="">All BMI classes</option>
-            <option value="0">Underweight</option>
-            <option value="1">Normal</option>
-            <option value="2">Overweight</option>
-            <option value="3">Obesity</option>
+            <OptionList placeholder="All BMI classes" options={bmiClassOptions} />
+          </Select>
+          <Select value={sex} onChange={filterSetter(setSex)} ariaLabel="Sex">
+            <OptionList placeholder="All sex" options={sexOptions} />
           </Select>
           <Select
-            value={sex}
-            onChange={(value) => {
-              setSex(value);
-              setPage(1);
-            }}
+            value={ckd}
+            onChange={filterSetter(setCkd)}
+            ariaLabel="CKD status"
           >
-            <option value="">All sex</option>
-            <option value="0">Male</option>
-            <option value="1">Female</option>
-            <option value="2">Other</option>
+            <OptionList placeholder="All CKD status" options={ckdOptions} />
           </Select>
-          <Select value={sortBy} onChange={setSortBy}>
+          <Select
+            value={residence}
+            onChange={filterSetter(setResidence)}
+            ariaLabel="Residence"
+          >
+            <OptionList placeholder="All residence" options={residenceOptions} />
+          </Select>
+          <Select
+            value={ageBand}
+            onChange={filterSetter(setAgeBand)}
+            ariaLabel="Age group"
+          >
+            <OptionList placeholder="All age groups" options={ageBandOptions} />
+          </Select>
+          <Select
+            value={hddsTier}
+            onChange={filterSetter(setHddsTier)}
+            ariaLabel="Dietary diversity tier"
+          >
+            <OptionList placeholder="All HDDS tiers" options={hddsTierOptions} />
+          </Select>
+          <Select
+            value={quality}
+            onChange={filterSetter(setQuality)}
+            ariaLabel="Quality"
+          >
+            <OptionList placeholder="All quality" options={qualityOptions} />
+          </Select>
+          <Input
+            value={interviewerCode}
+            onChange={(event) =>
+              filterSetter(setInterviewerCode)(event.target.value)
+            }
+            placeholder="Interviewer code"
+            aria-label="Interviewer code"
+          />
+        </div>
+
+        <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+          <Select value={sortBy} onChange={setSortBy} ariaLabel="Sort by">
             <option value="createdAt">Sort by submitted date</option>
             <option value="bmi">Sort by BMI</option>
             <option value="hddsScore">Sort by HDDS</option>
             <option value="respondentId">Sort by respondent ID</option>
+            <option value="districtArea">Sort by area</option>
+            <option value="interviewerCode">Sort by interviewer</option>
           </Select>
-          <div className="flex gap-2">
-            <Select value={sortDir} onChange={setSortDir} className="flex-1">
-              <option value="desc">Descending</option>
-              <option value="asc">Ascending</option>
-            </Select>
-            <Button type="button" variant="outline" onClick={resetFilters}>
-              Reset
-            </Button>
-          </div>
+          <Select value={sortDir} onChange={setSortDir} ariaLabel="Sort direction">
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
+          </Select>
+          <Button type="button" variant="outline" onClick={resetFilters}>
+            Reset{activeFilterCount ? ` (${activeFilterCount})` : ""}
+          </Button>
         </div>
       </section>
 
@@ -306,10 +377,12 @@ export function SubmissionsClient() {
           </div>
         ) : null}
         <div className="overflow-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
+          <table className="w-full min-w-[1100px] text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
                 <th className="p-3">Respondent ID</th>
+                <th className="p-3">Sex</th>
+                <th className="p-3">CKD</th>
                 <th className="p-3">BMI</th>
                 <th className="p-3">BMI class</th>
                 <th className="p-3">HDDS</th>
@@ -322,7 +395,22 @@ export function SubmissionsClient() {
             <tbody>
               {rows.map((response: any) => (
                 <tr key={response._id} className="border-t align-top">
-                  <td className="p-3 font-medium">{response.respondentId}</td>
+                  <td className="p-3 font-medium">
+                    {response.respondentId}
+                    <p className="text-xs font-normal text-slate-500">
+                      {response.districtArea} · {response.interviewerCode}
+                    </p>
+                  </td>
+                  <td className="p-3">{response.sexLabel || "-"}</td>
+                  <td className="p-3">
+                    {response.ckdStatus === "CKD" ? (
+                      <span className="rounded-full bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700">
+                        CKD
+                      </span>
+                    ) : (
+                      <span className="text-slate-500">{response.ckdStatus}</span>
+                    )}
+                  </td>
                   <td className="p-3">{response.bmi ?? "-"}</td>
                   <td className="p-3">{response.bmiClass || "-"}</td>
                   <td className="p-3">{response.hddsScore ?? "-"}</td>
@@ -384,14 +472,14 @@ export function SubmissionsClient() {
               ))}
               {responsePage?.total === 0 ? (
                 <tr>
-                  <td className="p-4 text-center text-slate-500" colSpan={8}>
+                  <td className="p-4 text-center text-slate-500" colSpan={10}>
                     No submissions found.
                   </td>
                 </tr>
               ) : null}
               {responsePage === undefined ? (
                 <tr>
-                  <td className="p-4 text-center text-slate-500" colSpan={8}>
+                  <td className="p-4 text-center text-slate-500" colSpan={10}>
                     Loading...
                   </td>
                 </tr>

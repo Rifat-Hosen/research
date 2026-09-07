@@ -21,7 +21,7 @@ export default async function AdminLayout({
 
   return (
     <main className="min-h-screen bg-slate-100 text-slate-950">
-      <header className="border-b bg-white">
+      <header className="border-b bg-white print:hidden">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
@@ -35,6 +35,9 @@ export default async function AdminLayout({
             </Button>
             <Button asChild href="/admin/submissions" variant="ghost">
               Submissions
+            </Button>
+            <Button asChild href="/admin/report" variant="ghost">
+              Report
             </Button>
             <Button asChild href="/admin/share" variant="ghost">
               Share

@@ -104,6 +104,7 @@ export const surveySections: SurveySection[] = [
       { id: "A14", label: "Are you currently pregnant or breastfeeding?", type: "radio", required: true, options: [{ label: "Neither [0]", value: "0" }, { label: "Pregnant [1]", value: "1" }, { label: "Breastfeeding [2]", value: "2" }, { label: "Does not apply [9]", value: "9" }] },
       { id: "A15", label: "Your height", type: "number", required: true, unit: "ft + inch", min: 80, max: 250 },
       { id: "A16", label: "Your weight", type: "number", required: true, unit: "kg", min: 20, max: 300 },
+      { id: "A17", label: "Are you a chronic kidney disease (CKD) patient?", type: "radio", required: true, options: yesNoOptions },
     ],
   },
   {
