@@ -8,18 +8,23 @@ import {
 const visibleSections = surveySections.filter(
   (section) => section.id !== "metadata",
 );
+const printedMetadataIds = new Set(["date", "districtArea"]);
+const metadataFields = (
+  surveySections.find((section) => section.id === "metadata")?.fields ?? []
+).filter((field) => printedMetadataIds.has(field.id));
 
 const pageWidth = 595.28;
 const pageHeight = 841.89;
 const marginX = 28;
-const headerHeight = 30;
+const headerHeight = 26;
+const footerHeight = 22;
 const columnGap = 14;
 const columnCount = 2;
 const contentWidth = pageWidth - marginX * 2;
 const columnWidth =
   (contentWidth - columnGap * (columnCount - 1)) / columnCount;
-const contentTop = pageHeight - headerHeight - 13;
-const contentBottom = 30;
+const contentTop = pageHeight - headerHeight - 14;
+const contentBottom = footerHeight + 12;
 
 const brandGreen = "0.06 0.40 0.27";
 const bandGreen = "0.90 0.955 0.925";
@@ -28,6 +33,10 @@ const optionText = "0.20 0.24 0.30";
 const mutedText = "0.40 0.44 0.50";
 const ruleGrey = "0.70 0.74 0.78";
 const requiredRed = "0.78 0.24 0.24";
+const inkRule = "0.35 0.38 0.42";
+const sectionTitleText = "0.09 0.11 0.15";
+/** Question numbers sit in a fixed gutter so every question aligns. */
+const widestQuestionNumber = "A17.";
 
 /** Helvetica advance widths (per 1000 units) for ASCII 32-126. */
 const helvetica = [
@@ -208,10 +217,7 @@ class Doc {
 
   checkbox(x: number, y: number, size: number) {
     this.ops.push(
-      `0.97 0.985 0.975 rg ${x.toFixed(2)} ${y.toFixed(2)} ${size} ${size} re f`,
-    );
-    this.ops.push(
-      `${brandGreen} RG 0.65 w ${x.toFixed(2)} ${y.toFixed(2)} ${size} ${size} re S`,
+      `${inkRule} RG 0.7 w ${x.toFixed(2)} ${y.toFixed(2)} ${size} ${size} re S`,
     );
   }
 }
@@ -228,6 +234,7 @@ type Metrics = {
   boxSize: number;
   optionGap: number;
   answerIndent: number;
+  numberGutter: number;
   fieldGap: number;
   optionBlockGap: number;
   sectionBandHeight: number;
@@ -236,8 +243,8 @@ type Metrics = {
 };
 
 const baseMetrics: Metrics = {
-  questionSize: 10.8,
-  optionSize: 9.8,
+  questionSize: 11,
+  optionSize: 10,
   sectionTitleSize: 11.4,
   descriptionSize: 7.6,
   questionLeading: 13.1,
@@ -247,11 +254,12 @@ const baseMetrics: Metrics = {
   boxSize: 8.4,
   optionGap: 8,
   answerIndent: 10,
+  numberGutter: 0,
   fieldGap: 4,
-  optionBlockGap: 5,
+  optionBlockGap: 6,
   sectionBandHeight: 19,
   sectionHeadingAdvance: 24,
-  sectionGap: 6,
+  sectionGap: 8,
 };
 
 /**
@@ -285,6 +293,7 @@ function metricsFor(density: number): Metrics {
     boxSize: baseMetrics.boxSize * fontScale,
     optionGap: baseMetrics.optionGap * density,
     answerIndent: baseMetrics.answerIndent * density,
+    numberGutter: measure(widestQuestionNumber, questionSize, true) + 4,
     fieldGap: baseMetrics.fieldGap * density,
     optionBlockGap: baseMetrics.optionBlockGap * density,
     sectionBandHeight: baseMetrics.sectionBandHeight * fontScale,
@@ -295,7 +304,7 @@ function metricsFor(density: number): Metrics {
 
 /** Lay out one field's options into rows that fit the column width. */
 function optionRows(field: SurveyField, m: Metrics) {
-  const available = columnWidth - m.answerIndent;
+  const available = columnWidth - m.numberGutter;
   const rows: { label: string; width: number }[][] = [];
   let row: { label: string; width: number }[] = [];
   let used = 0;
@@ -333,9 +342,9 @@ function fieldHeight(field: SurveyField, questionLines: number, m: Metrics) {
 
 function drawField(doc: Doc, field: SurveyField, m: Metrics) {
   const prefix = `${field.id}.`;
-  const prefixWidth = measure(prefix, m.questionSize, true) + 4;
-  const unit = field.unit ? ` (${field.unit})` : "";
-  const label = `${field.label}${unit}`;
+  const prefixWidth = m.numberGutter;
+  // Units are printed beside the answer box, so they are not repeated here.
+  const label = field.label;
   // Leave room for the required marker drawn after the final line.
   const textWidth = columnWidth - prefixWidth - (field.required ? 8 : 0);
 
@@ -346,7 +355,7 @@ function drawField(doc: Doc, field: SurveyField, m: Metrics) {
 
   lines.forEach((line, index) => {
     if (index === 0) {
-      doc.text(prefix, left, doc.y, m.questionSize, brandGreen, true);
+      doc.text(prefix, left, doc.y, m.questionSize, darkText, true);
     }
     doc.text(line, left + prefixWidth, doc.y, m.questionSize);
     if (field.required && index === lines.length - 1) {
@@ -364,7 +373,7 @@ function drawField(doc: Doc, field: SurveyField, m: Metrics) {
 
   if (field.options?.length) {
     for (const row of optionRows(field, m)) {
-      let x = left + m.answerIndent;
+      let x = left + m.numberGutter;
       for (const option of row) {
         doc.checkbox(x, doc.y - 1, m.boxSize);
         doc.text(
@@ -382,41 +391,31 @@ function drawField(doc: Doc, field: SurveyField, m: Metrics) {
     return;
   }
 
-  // Open-value answers get real rules to write on.
+  // Written answers get a plain rule to write on, with the unit after it.
+  const ruleLeft = left + m.numberGutter;
+  const ruleY = () => doc.y - 2;
+  const unitLabel = (text: string, x: number) =>
+    doc.text(text, x, doc.y, m.optionSize, optionText);
+
   if (field.id === "A15") {
-    const segment = 58;
-    doc.line(left + m.answerIndent, doc.y - 2, segment);
-    doc.text(
-      "ft",
-      left + m.answerIndent + segment + 4,
-      doc.y,
-      m.optionSize,
-      mutedText,
-    );
-    const second = left + m.answerIndent + segment + 20;
-    doc.line(second, doc.y - 2, segment);
-    doc.text("inch", second + segment + 4, doc.y, m.optionSize, mutedText);
+    const segment = 46;
+    doc.line(ruleLeft, ruleY(), segment, inkRule, 0.6);
+    unitLabel("ft", ruleLeft + segment + 4);
+    const second = ruleLeft + segment + 24;
+    doc.line(second, ruleY(), segment, inkRule, 0.6);
+    unitLabel("inch", second + segment + 4);
     doc.y -= m.ruleLeading;
-  } else {
-    const rules = answerRuleCount(field);
-    const unitWidth = field.unit ? measure(field.unit, m.optionSize) + 8 : 0;
-    const width =
-      field.type === "textarea"
-        ? columnWidth - m.answerIndent
-        : Math.min(150, columnWidth - m.answerIndent - unitWidth);
-    for (let index = 0; index < rules; index += 1) {
-      doc.line(left + m.answerIndent, doc.y - 2, width);
-      if (index === 0 && field.unit && field.type !== "textarea") {
-        doc.text(
-          field.unit,
-          left + m.answerIndent + width + 5,
-          doc.y,
-          m.optionSize,
-          mutedText,
-        );
-      }
+  } else if (field.type === "textarea") {
+    for (let index = 0; index < answerRuleCount(field); index += 1) {
+      doc.line(ruleLeft, ruleY(), columnWidth - m.numberGutter, inkRule, 0.6);
       doc.y -= m.ruleLeading;
     }
+  } else {
+    const unitWidth = field.unit ? measure(field.unit, m.optionSize) + 8 : 0;
+    const width = Math.min(110, columnWidth - m.numberGutter - unitWidth);
+    doc.line(ruleLeft, ruleY(), width, inkRule, 0.6);
+    if (field.unit) unitLabel(field.unit, ruleLeft + width + 5);
+    doc.y -= m.ruleLeading;
   }
 
   doc.y -= m.fieldGap;
@@ -431,39 +430,78 @@ function buildDocument(m: Metrics, columnTarget = fullColumnHeight) {
     marginX,
     doc.y,
     15,
-    brandGreen,
+    darkText,
     true,
   );
-  doc.y -= 14;
+  doc.y -= 13;
   doc.text(
     "Healthy Eating Index and Its Association with BMI Among Adults",
     marginX,
     doc.y,
-    9.6,
-    "0.24 0.28 0.34",
+    9.4,
+    optionText,
   );
-  doc.y -= 9;
-  doc.rect(marginX, doc.y, 46, 2.2, brandGreen);
-  doc.line(marginX + 52, doc.y + 1, contentWidth - 52, "0.87 0.90 0.92", 0.7);
-  doc.y -= 14;
+  doc.y -= 13;
+
+  // Date and area on one ruled line, right-aligned in two equal parts.
+  const metaGap = 16;
+  const metaWidth = 150;
+  metadataFields.forEach((field, index) => {
+    const x =
+      pageWidth -
+      marginX -
+      (metadataFields.length - index) * metaWidth -
+      (metadataFields.length - index - 1) * metaGap;
+    const label = `${field.label}:`;
+    const labelWidth = measure(label, 8.6, true) + 4;
+    doc.text(label, x, doc.y, 8.6, darkText, true);
+    doc.line(x + labelWidth, doc.y - 2, metaWidth - labelWidth, inkRule, 0.6);
+  });
+  doc.text(
+    "Tick one box per question unless told otherwise. * = required.",
+    marginX,
+    doc.y,
+    8,
+    optionText,
+  );
+  doc.y -= 7;
+  doc.line(marginX, doc.y, contentWidth, darkText, 0.9);
+  doc.y -= 15;
 
   // Columns on page 1 start below the title block.
   doc.columnStartY = doc.y;
 
   for (const section of visibleSections) {
-    // Keep a section heading with at least the start of its first question.
-    doc.reserve(m.sectionHeadingAdvance + m.questionLeading * 2.9);
+    // Keep a section heading together with its first question.
+    const firstField = section.fields[0];
+    const firstFieldHeight = firstField
+      ? fieldHeight(
+          firstField,
+          wrapIndented(
+            firstField.label,
+            columnWidth - m.numberGutter - 8,
+            columnWidth - m.numberGutter - 8,
+            m.questionSize,
+          ).length,
+          m,
+        )
+      : 0;
+    const descriptionHeight = section.description
+      ? wrap(section.description, columnWidth, m.descriptionSize).length *
+          m.descriptionLeading +
+        m.fieldGap
+      : 0;
+    doc.reserve(m.sectionHeadingAdvance + descriptionHeight + firstFieldHeight);
 
-    doc.rect(doc.x - 5, doc.y - 5.5, columnWidth + 10, m.sectionBandHeight, bandGreen);
-    doc.rect(doc.x - 5, doc.y - 5.5, 2.6, m.sectionBandHeight, brandGreen);
     doc.text(
-      section.title,
-      doc.x + 1,
+      section.title.toUpperCase(),
+      doc.x,
       doc.y,
-      m.sectionTitleSize,
-      "0.02 0.30 0.20",
+      m.sectionTitleSize - 0.8,
+      sectionTitleText,
       true,
     );
+    doc.line(doc.x, doc.y - 4, columnWidth, darkText, 0.9);
     doc.y -= m.sectionHeadingAdvance;
 
     if (section.description) {
@@ -488,19 +526,32 @@ function decoratePage(ops: Page, pageNumber: number, pageCount: number) {
   const chrome: string[] = [
     `1 1 1 rg 0 0 ${pageWidth} ${pageHeight} re f`,
     `${brandGreen} rg 0 ${pageHeight - headerHeight} ${pageWidth} ${headerHeight} re f`,
-    `1 1 1 rg BT /F2 9.5 Tf ${marginX} ${pageHeight - 22} Td (Nutrition Assessment Survey) Tj ET`,
+    `1 1 1 rg BT /F2 9.2 Tf ${marginX} ${pageHeight - 17} Td (Nutrition Assessment Survey) Tj ET`,
   ];
 
-  const label = `Page ${pageNumber} of ${pageCount}`;
-  const labelX = pageWidth - marginX - measure(label, 8);
+  const headerRight = "Healthy Eating Index and BMI Study";
   chrome.push(
-    `0.85 0.93 0.89 rg BT /F1 8 Tf ${labelX.toFixed(2)} ${pageHeight - 22} Td (${escapePdfText(label)}) Tj ET`,
+    `0.85 0.93 0.89 rg BT /F1 8 Tf ${(pageWidth - marginX - measure(headerRight, 8)).toFixed(2)} ${pageHeight - 17} Td (${escapePdfText(headerRight)}) Tj ET`,
+  );
+
+  // Footer: confidentiality note on the left, page number on the right.
+  chrome.push(
+    `0.87 0.90 0.92 RG 0.6 w ${marginX} ${footerHeight + 4} m ${pageWidth - marginX} ${footerHeight + 4} l S`,
+  );
+  chrome.push(
+    `${mutedText} rg BT /F1 7.4 Tf ${marginX} ${footerHeight - 6} Td (Confidential - for academic research use only. Responses are anonymous.) Tj ET`,
+  );
+  const label = `Page ${pageNumber} of ${pageCount}`;
+  const labelX = pageWidth - marginX - measure(label, 7.4);
+  chrome.push(
+    `${mutedText} rg BT /F1 7.4 Tf ${labelX.toFixed(2)} ${footerHeight - 6} Td (${escapePdfText(label)}) Tj ET`,
   );
 
   // Divider between the two columns.
   const dividerX = marginX + columnWidth + columnGap / 2;
+  const dividerTop = pageNumber === 1 ? contentTop - 72 : pageHeight - headerHeight - 8;
   chrome.push(
-    `0.88 0.91 0.93 RG 0.6 w ${dividerX.toFixed(2)} ${contentBottom - 4} m ${dividerX.toFixed(2)} ${(pageHeight - headerHeight - 8).toFixed(2)} l S`,
+    `0.88 0.91 0.93 RG 0.6 w ${dividerX.toFixed(2)} ${contentBottom - 2} m ${dividerX.toFixed(2)} ${dividerTop.toFixed(2)} l S`,
   );
 
   return [...chrome, ...ops].join("\n");

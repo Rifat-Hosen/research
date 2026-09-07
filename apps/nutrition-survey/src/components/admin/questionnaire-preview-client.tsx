@@ -1,6 +1,6 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { Download, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   downloadQuestionnairePdf,
@@ -15,14 +15,24 @@ export function QuestionnairePreviewClient() {
           <h2 className="text-2xl font-semibold">Questionnaire Preview</h2>
           <p className="text-sm text-slate-600">
             Preview of all respondent-facing questions and coded answer options.
-            The PDF download is a print-ready A4 manual-fill form with tick
-            boxes and ruled answer lines.
+            The English PDF downloads directly. The Bangla version opens a
+            print view; choose "Save as PDF" in the print dialog.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button type="button" onClick={downloadQuestionnairePdf}>
             <Download className="size-4" />
-            Download PDF
+            Download PDF (English)
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              window.open("/print/questionnaire-bn", "_blank")
+            }
+          >
+            <Languages className="size-4" />
+            Download PDF (Bangla)
           </Button>
         </div>
       </div>
