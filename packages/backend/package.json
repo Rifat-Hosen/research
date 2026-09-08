@@ -9,7 +9,7 @@
     "./convex/_generated/dataModel": "./convex/_generated/dataModel.d.ts",
     "./convex/_generated/server": "./convex/_generated/server.js",
     "./convex/survey/questionnaire": "./convex/survey/questionnaire.ts",
-    "./convex/survey/questionnaire-bn": "./convex/survey/questionnaire-bn.ts",
+    "./convex/survey/questionnaireBn": "./convex/survey/questionnaireBn.ts",
     "./convex/survey/scoring": "./convex/survey/scoring.ts"
   },
   "scripts": {

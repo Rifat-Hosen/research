@@ -5,7 +5,7 @@ import { Noto_Sans_Bengali } from "next/font/google";
 import {
   banglaFormText,
   surveySectionsBn,
-} from "@workspace/backend/convex/survey/questionnaire-bn";
+} from "@workspace/backend/convex/survey/questionnaireBn";
 import type { SurveyField } from "@workspace/backend/convex/survey/questionnaire";
 
 const bengali = Noto_Sans_Bengali({

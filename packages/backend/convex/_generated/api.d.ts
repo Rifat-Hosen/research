@@ -11,6 +11,7 @@
 import type * as survey_admin from "../survey/admin.js";
 import type * as survey_public from "../survey/public.js";
 import type * as survey_questionnaire from "../survey/questionnaire.js";
+import type * as survey_questionnaireBn from "../survey/questionnaireBn.js";
 import type * as survey_scoring from "../survey/scoring.js";
 import type * as survey_validators from "../survey/validators.js";
 
@@ -24,6 +25,7 @@ declare const fullApi: ApiFromModules<{
   "survey/admin": typeof survey_admin;
   "survey/public": typeof survey_public;
   "survey/questionnaire": typeof survey_questionnaire;
+  "survey/questionnaireBn": typeof survey_questionnaireBn;
   "survey/scoring": typeof survey_scoring;
   "survey/validators": typeof survey_validators;
 }>;
