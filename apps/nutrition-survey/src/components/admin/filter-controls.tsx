@@ -60,10 +60,12 @@ export const hddsTierOptions = [
 ];
 
 export const bmiClassOptions = [
-  { value: "0", label: "Underweight" },
-  { value: "1", label: "Normal" },
-  { value: "2", label: "Overweight" },
-  { value: "3", label: "Obesity" },
+  { value: "0", label: "Underweight (under 18.5)" },
+  { value: "1", label: "Normal (18.5 - 22.9)" },
+  { value: "2", label: "Overweight (23.0 - 27.4)" },
+  { value: "3", label: "Obesity class I (27.5 - 32.4)" },
+  { value: "4", label: "Obesity class II (32.5 - 37.4)" },
+  { value: "5", label: "Obesity class III (37.5 and above)" },
 ];
 
 export const qualityOptions = [

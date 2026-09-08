@@ -1,4 +1,4 @@
-export type BmiClassCode = 0 | 1 | 2 | 3;
+export type BmiClassCode = 0 | 1 | 2 | 3 | 4 | 5;
 
 export function calculateBmi(heightCm?: number | null, weightKg?: number | null) {
   if (!heightCm || !weightKg || heightCm <= 0 || weightKg <= 0) {
@@ -9,20 +9,36 @@ export function calculateBmi(heightCm?: number | null, weightKg?: number | null)
   return Math.round((weightKg / (heightM * heightM)) * 10) / 10;
 }
 
+/**
+ * Asian (WHO Asia-Pacific) BMI cut-offs in kg/m2:
+ * <18.5 underweight, 18.5-22.9 normal, 23.0-27.4 overweight,
+ * 27.5-32.4 obesity class I, 32.5-37.4 obesity class II, >=37.5 obesity class III.
+ */
 export function getBmiClassCode(bmi?: number | null): BmiClassCode | null {
   if (bmi == null || !Number.isFinite(bmi)) return null;
   if (bmi < 18.5) return 0;
-  if (bmi < 25) return 1;
-  if (bmi < 30) return 2;
-  return 3;
+  if (bmi < 23) return 1;
+  if (bmi < 27.5) return 2;
+  if (bmi < 32.5) return 3;
+  if (bmi < 37.5) return 4;
+  return 5;
 }
+
+export const BMI_CLASS_CODES: BmiClassCode[] = [0, 1, 2, 3, 4, 5];
 
 export function getBmiClassLabel(code?: BmiClassCode | null) {
   if (code === 0) return "Underweight";
   if (code === 1) return "Normal";
   if (code === 2) return "Overweight";
-  if (code === 3) return "Obesity";
+  if (code === 3) return "Obesity class I";
+  if (code === 4) return "Obesity class II";
+  if (code === 5) return "Obesity class III";
   return "";
+}
+
+/** Overweight plus every obesity class (BMI 23.0 and above on Asian cut-offs). */
+export function isOverweightOrObese(code?: number | null) {
+  return code != null && code >= 2;
 }
 
 function yes(value: unknown) {

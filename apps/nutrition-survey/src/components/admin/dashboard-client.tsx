@@ -63,7 +63,14 @@ export function DashboardClient() {
     );
   }
 
-  const bmiTones = ["amber", "emerald", "sky", "rose"] as const;
+  const bmiTones = [
+    "amber",
+    "emerald",
+    "sky",
+    "rose",
+    "rose",
+    "rose",
+  ] as const;
   const hddsTones = ["rose", "amber", "emerald"] as const;
   const activityTones = ["rose", "amber", "emerald", "emerald"] as const;
 
@@ -217,8 +224,8 @@ export function DashboardClient() {
 
       <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
         <Panel
-          title="BMI classification"
-          description="Distribution among included respondents with valid height and weight."
+          title="BMI classification (Asian cut-offs)"
+          description="Asian / WHO Asia-Pacific cut-offs: under 18.5 underweight, 18.5-22.9 normal, 23.0-27.4 overweight, 27.5+ obesity classes I-III. Included respondents with valid height and weight."
           icon={BarChart3}
         >
           <div className="grid gap-4">
@@ -239,13 +246,13 @@ export function DashboardClient() {
               note="kg/m²"
             />
             <MetricTile
-              label="Underweight"
+              label="Underweight (under 18.5)"
               value={stats.bmiRecorded ? `${stats.underweight.percent}%` : "-"}
               note={`${stats.underweight.count} respondents`}
               tone="amber"
             />
             <MetricTile
-              label="Overweight / obese"
+              label="Overweight / obese (23.0+)"
               value={
                 stats.bmiRecorded ? `${stats.overweightObese.percent}%` : "-"
               }

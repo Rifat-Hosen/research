@@ -1,7 +1,14 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { surveySections, type SurveyField } from "./questionnaire";
-import { getBmiClassLabel } from "./scoring";
+import { readNumber } from "./validators";
+import {
+  BMI_CLASS_CODES,
+  calculateBmi,
+  getBmiClassCode,
+  getBmiClassLabel,
+  isOverweightOrObese,
+} from "./scoring";
 
 const targetSampleSize = 500;
 
@@ -378,13 +385,13 @@ export const getDashboardStats = query({
           ) / 10
         : null;
 
-    const bmiDistribution = [0, 1, 2, 3].map((code) => {
+    const bmiDistribution = BMI_CLASS_CODES.map((code) => {
       const count = includedResponses.filter(
         (response) => response.bmiClassCode === code,
       ).length;
       return {
         code,
-        label: getBmiClassLabel(code as any),
+        label: getBmiClassLabel(code),
         count,
         percent: responsesWithBmi.length
           ? Math.round((count / responsesWithBmi.length) * 100)
@@ -468,7 +475,7 @@ export const getDashboardStats = query({
     })();
 
     const overweightObeseCount = includedResponses.filter(
-      (response) => response.bmiClassCode === 2 || response.bmiClassCode === 3,
+      (response) => isOverweightOrObese(response.bmiClassCode),
     ).length;
     const underweightCount = includedResponses.filter(
       (response) => response.bmiClassCode === 0,
@@ -484,7 +491,7 @@ export const getDashboardStats = query({
       );
       const perceivedClass = (code: string) =>
         code === "0" ? 0 : code === "1" ? 1 : 2;
-      const actualClass = (code: number) => (code === 3 ? 2 : code);
+      const actualClass = (code: number) => (code >= 2 ? 2 : code);
       const count = comparable.filter(
         (response) =>
           perceivedClass(String(psychOf(response).D11)) !==
@@ -509,9 +516,9 @@ export const getDashboardStats = query({
       (response) => !answered(socioOf(response).A17),
     ).length;
 
-    const bmiClassOptions = [0, 1, 2, 3].map((code) => ({
+    const bmiClassOptions = BMI_CLASS_CODES.map((code) => ({
       code,
-      label: getBmiClassLabel(code as any),
+      label: getBmiClassLabel(code),
     }));
 
     /** BMI class counts and key indicators inside one subgroup. */
@@ -534,8 +541,7 @@ export const getDashboardStats = query({
           return { ...option, count, percent: percentOf(count) };
         }),
         overweightObesePercent: percentOf(
-          withBmi.filter((r) => r.bmiClassCode === 2 || r.bmiClassCode === 3)
-            .length,
+          withBmi.filter((r) => isOverweightOrObese(r.bmiClassCode)).length,
         ),
         underweightPercent: percentOf(
           withBmi.filter((r) => r.bmiClassCode === 0).length,
@@ -779,7 +785,7 @@ export const getDashboardStats = query({
           { code: "3", label: "Business" },
           { code: "4", label: "Unemployed" },
           { code: "5", label: "Other" },
-          { code: "6", label: "Homemaker" },
+          { code: "6", label: "Job" },
           { code: "7", label: "Labour" },
           { code: "8", label: "Agriculture" },
         ],
@@ -1118,5 +1124,41 @@ export const deleteResponse = mutation({
 
     await ctx.db.delete(args.id);
     return args.id;
+  },
+});
+
+/**
+ * Re-scores every stored submission against the current BMI cut-offs.
+ * Run after changing the classification (for example the switch to the Asian
+ * cut-offs) so historical records match what new submissions get:
+ *   npx convex run survey/admin:recomputeBmiClasses
+ */
+export const recomputeBmiClasses = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const responses = await ctx.db.query("surveyResponses").collect();
+    let updated = 0;
+
+    for (const response of responses) {
+      const bmi =
+        calculateBmi(
+          readNumber(response.sociodemographic as any, "A15"),
+          readNumber(response.sociodemographic as any, "A16"),
+        ) ?? response.bmi ?? null;
+      const bmiClassCode = getBmiClassCode(bmi);
+
+      if (response.bmi === bmi && response.bmiClassCode === bmiClassCode) {
+        continue;
+      }
+
+      await ctx.db.patch(response._id, {
+        bmi,
+        bmiClassCode,
+        updatedAt: Date.now(),
+      });
+      updated += 1;
+    }
+
+    return { scanned: responses.length, updated };
   },
 });

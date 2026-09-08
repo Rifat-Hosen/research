@@ -187,7 +187,7 @@ export function ReportClient() {
     },
     {
       section: "B",
-      indicator: "Overweight or obese (BMI 25 and above)",
+      indicator: "Overweight or obese (BMI 23.0 and above, Asian cut-off)",
       value: stats.bmiRecorded ? `${stats.overweightObese.percent}%` : "-",
       numerator: stats.overweightObese.count,
       denominator: stats.bmiRecorded,
@@ -367,7 +367,10 @@ export function ReportClient() {
         <ReportSection title="Section B. Nutritional status and dietary diversity">
           <IndicatorTable rows={nutritionRows} />
           <div className="grid gap-5 sm:grid-cols-2">
-            <DistributionTable title="BMI classification" items={stats.bmiDistribution} />
+            <DistributionTable
+              title="BMI classification (Asian cut-offs)"
+              items={stats.bmiDistribution}
+            />
             <DistributionTable title="HDDS tier" items={stats.hddsDistribution} />
           </div>
           <div>
